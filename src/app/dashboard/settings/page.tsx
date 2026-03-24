@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useProject } from "@/lib/project-context";
+import { updateProject } from "@/lib/api";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { currentProject } = useProject();
+  const { currentProject, refresh } = useProject();
 
   const [projectName, setProjectName] = useState(currentProject.name);
   const [location, setLocation] = useState(currentProject.location);
@@ -18,7 +19,34 @@ export default function SettingsPage() {
   const [workStart, setWorkStart] = useState("07:00");
   const [workEnd, setWorkEnd] = useState("18:00");
   const [email, setEmail] = useState("");
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProjectName(currentProject.name);
+    setLocation(currentProject.location);
+    setCoverage(String(currentProject.coveragePercent));
+  }, [currentProject]);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      await updateProject(currentProject.id, {
+        name: projectName,
+        location,
+      });
+      refresh();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }, [currentProject.id, projectName, location, refresh]);
 
   const intervalOptions = [
     { value: "15m", label: "Every 15 minutes" },
@@ -27,11 +55,6 @@ export default function SettingsPage() {
     { value: "2h", label: "Every 2 hours" },
     { value: "4h", label: "Every 4 hours" },
   ];
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   return (
     <div className="space-y-6">
@@ -113,12 +136,19 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleSave}>
-          <Save className="h-4 w-4" />
-          Save Settings
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          {saving ? "Saving…" : "Save Settings"}
         </Button>
         {saved && (
           <span className="text-sm text-success">Settings saved successfully</span>
+        )}
+        {error && (
+          <span className="text-sm text-destructive">{error}</span>
         )}
       </div>
     </div>

@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 import { useProject } from "@/lib/project-context";
-import { getDailyMetrics, getWeeklyMetrics } from "@/lib/mock-data";
+import { fetchDailyMetrics, fetchWeeklyMetrics, fetchHeatmap } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
+import type { HeatmapCell } from "@/lib/api";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { ChartWrapper } from "@/components/charts/chart-wrapper";
 import { cn } from "@/lib/utils";
@@ -21,7 +23,21 @@ import { ShieldCheck } from "lucide-react";
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 6);
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-function generateHeatmapData(seed: number) {
+function buildHeatmapGrid(cells: HeatmapCell[]) {
+  const lookup = new Map<string, number>();
+  for (const c of cells) {
+    lookup.set(`${c.dayOfWeek}-${c.hour}`, c.count);
+  }
+  return DAYS.map((day, di) => {
+    const row: Record<string, number | string> = { day };
+    HOURS.forEach((hour) => {
+      row[`h${hour}`] = lookup.get(`${di}-${hour}`) ?? 0;
+    });
+    return row;
+  });
+}
+
+function generateLocalHeatmap(seed: number) {
   return DAYS.map((day, di) => {
     const row: Record<string, number | string> = { day };
     HOURS.forEach((hour, hi) => {
@@ -44,18 +60,35 @@ function intensityClass(value: number): string {
 
 export default function ActivityPage() {
   const { currentProject } = useProject();
-  const daily = getDailyMetrics(currentProject.id);
-  const weekly = getWeeklyMetrics(currentProject.id);
-  const latestWeek = weekly[weekly.length - 1];
+
+  const { data: daily, loading: loadingD } = useApi(
+    () => fetchDailyMetrics(currentProject.id, 28),
+    [currentProject.id],
+  );
+  const { data: weekly, loading: loadingW } = useApi(
+    () => fetchWeeklyMetrics(currentProject.id, 26),
+    [currentProject.id],
+  );
+  const { data: heatmapCells } = useApi(
+    () => fetchHeatmap(currentProject.id),
+    [currentProject.id],
+  );
 
   const heatmap = useMemo(() => {
+    if (heatmapCells && heatmapCells.length > 0) {
+      return buildHeatmapGrid(heatmapCells);
+    }
     const seedMap: Record<string, number> = { "proj-1": 55, "proj-2": 23, "proj-3": 77 };
-    return generateHeatmapData(seedMap[currentProject.id] ?? 40);
-  }, [currentProject.id]);
+    return generateLocalHeatmap(seedMap[currentProject.id] ?? 40);
+  }, [heatmapCells, currentProject.id]);
 
+  if (loadingD || loadingW || !daily || !weekly) {
+    return <div className="py-12 text-center text-muted">Loading…</div>;
+  }
+
+  const latestWeek = weekly[weekly.length - 1];
   const last14 = daily.slice(-14);
-
-  const scorePercent = Math.min(100, Math.round(latestWeek.activityIndex));
+  const scorePercent = latestWeek ? Math.min(100, Math.round(latestWeek.activityIndex)) : 0;
 
   return (
     <div className="space-y-6">
@@ -157,7 +190,7 @@ export default function ActivityPage() {
                     <div
                       className={cn(
                         "h-6 rounded-sm",
-                        intensityClass(row[`h${h}`] as number)
+                        intensityClass(row[`h${h}`] as number),
                       )}
                       title={`${row.day} ${h}:00 — score: ${row[`h${h}`]}`}
                     />

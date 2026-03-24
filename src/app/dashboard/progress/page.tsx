@@ -2,11 +2,12 @@
 
 import { useState, useMemo } from "react";
 import { useProject } from "@/lib/project-context";
-import { getWeeklyMetrics } from "@/lib/mock-data";
+import { fetchWeeklyMetrics } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Toggle } from "@/components/ui/toggle";
 import { ChartWrapper } from "@/components/charts/chart-wrapper";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AreaChart,
   Area,
@@ -22,19 +23,30 @@ const timeframeWeeks: Record<Timeframe, number> = { "4w": 4, "12w": 12, "26w": 2
 
 export default function ProgressPage() {
   const { currentProject } = useProject();
-  const weekly = getWeeklyMetrics(currentProject.id);
+
+  const { data: weekly, loading } = useApi(
+    () => fetchWeeklyMetrics(currentProject.id, 26),
+    [currentProject.id],
+  );
 
   const [timeframe, setTimeframe] = useState<Timeframe>("12w");
   const [workingHoursOnly, setWorkingHoursOnly] = useState(true);
   const [weatherNorm, setWeatherNorm] = useState(false);
 
   const chartData = useMemo(() => {
+    if (!weekly) return [];
     const weeks = timeframeWeeks[timeframe];
     return weekly.slice(-weeks);
   }, [weekly, timeframe]);
 
   const avg =
-    chartData.reduce((sum, w) => sum + w.progressDelta, 0) / chartData.length;
+    chartData.length > 0
+      ? chartData.reduce((sum, w) => sum + w.progressDelta, 0) / chartData.length
+      : 0;
+
+  if (loading || !weekly) {
+    return <div className="py-12 text-center text-muted">Loading…</div>;
+  }
 
   return (
     <div className="space-y-6">

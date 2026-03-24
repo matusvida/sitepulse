@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useProject } from "@/lib/project-context";
-import { getAlerts } from "@/lib/mock-data";
+import { fetchAlerts, updateAlertStatus } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { formatDateTime } from "@/lib/utils";
-import { Card, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -38,23 +39,60 @@ const statusOptions = [
 
 export default function AlertsPage() {
   const { currentProject } = useProject();
-  const alerts = getAlerts(currentProject.id);
 
   const [typeFilter, setTypeFilter] = useState("all");
   const [severityFilter, setSeverityFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const [ackLoading, setAckLoading] = useState(false);
 
-  const filtered = useMemo(() => {
-    return alerts.filter((a) => {
-      if (typeFilter !== "all" && a.type !== typeFilter) return false;
-      if (severityFilter !== "all" && a.severity !== severityFilter) return false;
-      if (statusFilter !== "all" && a.status !== statusFilter) return false;
-      return true;
-    });
-  }, [alerts, typeFilter, severityFilter, statusFilter]);
+  const filters = useMemo(
+    () => ({
+      type: typeFilter,
+      severity: severityFilter,
+      status: statusFilter,
+    }),
+    [typeFilter, severityFilter, statusFilter],
+  );
+
+  const { data: alerts, loading, refetch } = useApi(
+    () => fetchAlerts(currentProject.id, filters),
+    [currentProject.id, filters],
+  );
 
   const handleClose = useCallback(() => setSelectedAlert(null), []);
+
+  const handleAcknowledge = useCallback(async () => {
+    if (!selectedAlert) return;
+    setAckLoading(true);
+    try {
+      await updateAlertStatus(currentProject.id, selectedAlert.id, "acknowledged");
+      setSelectedAlert(null);
+      refetch();
+    } catch {
+      // Silently degrade — alert stays as-is
+    } finally {
+      setAckLoading(false);
+    }
+  }, [selectedAlert, currentProject.id, refetch]);
+
+  const handleResolve = useCallback(async () => {
+    if (!selectedAlert) return;
+    setAckLoading(true);
+    try {
+      await updateAlertStatus(currentProject.id, selectedAlert.id, "resolved");
+      setSelectedAlert(null);
+      refetch();
+    } catch {
+      // Silently degrade
+    } finally {
+      setAckLoading(false);
+    }
+  }, [selectedAlert, currentProject.id, refetch]);
+
+  if (loading || !alerts) {
+    return <div className="py-12 text-center text-muted">Loading…</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -80,14 +118,14 @@ export default function AlertsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {alerts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-muted">
                     No alerts match the current filters.
                   </td>
                 </tr>
               ) : (
-                filtered.map((alert) => (
+                alerts.map((alert) => (
                   <tr
                     key={alert.id}
                     className="border-b last:border-0 hover:bg-accent/50 cursor-pointer transition-colors"
@@ -158,7 +196,25 @@ export default function AlertsPage() {
               <Button variant="outline" size="sm" onClick={handleClose}>
                 Close
               </Button>
-              <Button size="sm">Acknowledge</Button>
+              {selectedAlert.status === "open" && (
+                <Button
+                  size="sm"
+                  onClick={handleAcknowledge}
+                  disabled={ackLoading}
+                >
+                  {ackLoading ? "Saving…" : "Acknowledge"}
+                </Button>
+              )}
+              {selectedAlert.status !== "resolved" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResolve}
+                  disabled={ackLoading}
+                >
+                  {ackLoading ? "Saving…" : "Resolve"}
+                </Button>
+              )}
             </div>
           </div>
         )}

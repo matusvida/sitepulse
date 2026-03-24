@@ -1,7 +1,8 @@
 "use client";
 
 import { useProject } from "@/lib/project-context";
-import { getWeeklyMetrics, getAlerts } from "@/lib/mock-data";
+import { fetchWeeklyMetrics, fetchAlerts } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +26,29 @@ import {
 
 export default function OverviewPage() {
   const { currentProject } = useProject();
-  const weekly = getWeeklyMetrics(currentProject.id);
-  const alerts = getAlerts(currentProject.id);
+
+  const { data: weekly, loading: loadingW } = useApi(
+    () => fetchWeeklyMetrics(currentProject.id, 26),
+    [currentProject.id],
+  );
+  const { data: alerts, loading: loadingA } = useApi(
+    () => fetchAlerts(currentProject.id),
+    [currentProject.id],
+  );
+
+  if (loadingW || loadingA || !weekly || !alerts) {
+    return <div className="py-12 text-center text-muted">Loading…</div>;
+  }
 
   const latest = weekly[weekly.length - 1];
+  if (!latest) {
+    return (
+      <div className="py-12 text-center text-muted">
+        No metrics data available yet. Run the analysis engine first.
+      </div>
+    );
+  }
+
   const chartData = weekly.slice(-12);
 
   const kpis = [
@@ -58,8 +78,8 @@ export default function OverviewPage() {
         latest.riskLevel === "Low"
           ? "No concerns"
           : latest.riskLevel === "Medium"
-          ? "Monitor closely"
-          : "Action needed",
+            ? "Monitor closely"
+            : "Action needed",
     },
   ];
 
@@ -67,8 +87,8 @@ export default function OverviewPage() {
     latest.riskLevel === "Low"
       ? "low"
       : latest.riskLevel === "Medium"
-      ? "medium"
-      : ("high" as const);
+        ? "medium"
+        : ("high" as const);
 
   return (
     <div className="space-y-6">

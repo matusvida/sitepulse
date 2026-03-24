@@ -1,23 +1,55 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
-import { projects } from "./mock-data";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
+import { fetchProjects } from "./api";
+import { projects as mockProjects } from "./mock-data";
 import type { Project } from "./types";
 
 interface ProjectContextValue {
   currentProject: Project;
   setProjectId: (id: string) => void;
   allProjects: Project[];
+  loading: boolean;
+  refresh: () => void;
 }
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
-  const [projectId, setProjectId] = useState(projects[0].id);
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [projectId, setProjectId] = useState<string>(mockProjects[0].id);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchProjects();
+      if (data.length > 0) {
+        setProjects(data);
+        setProjectId((prev) => {
+          const stillExists = data.some((p) => p.id === prev);
+          return stillExists ? prev : data[0].id;
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const currentProject = useMemo(
     () => projects.find((p) => p.id === projectId) ?? projects[0],
-    [projectId]
+    [projects, projectId],
   );
 
   const handleSetProjectId = useCallback((id: string) => {
@@ -29,8 +61,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       currentProject,
       setProjectId: handleSetProjectId,
       allProjects: projects,
+      loading,
+      refresh: load,
     }),
-    [currentProject, handleSetProjectId]
+    [currentProject, handleSetProjectId, projects, loading, load],
   );
 
   return (

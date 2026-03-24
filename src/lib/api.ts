@@ -1,0 +1,172 @@
+import type { Project, WeeklyMetrics, DailyMetrics, Alert } from "./types";
+import {
+  projects as mockProjects,
+  getWeeklyMetrics as mockWeekly,
+  getDailyMetrics as mockDaily,
+  getAlerts as mockAlerts,
+} from "./mock-data";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`);
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function patch<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function post<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// ── Projects ────────────────────────────────────────────────────────────────
+
+export async function fetchProjects(): Promise<Project[]> {
+  try {
+    return await get<Project[]>("/api/projects");
+  } catch {
+    return mockProjects;
+  }
+}
+
+export async function fetchProject(id: string): Promise<Project> {
+  try {
+    return await get<Project>(`/api/projects/${id}`);
+  } catch {
+    const p = mockProjects.find((p) => p.id === id);
+    if (!p) throw new Error("Project not found");
+    return p;
+  }
+}
+
+export async function updateProject(
+  id: string,
+  data: { name?: string; location?: string; dropboxPath?: string },
+): Promise<Project> {
+  return patch<Project>(`/api/projects/${id}`, data);
+}
+
+// ── Metrics ─────────────────────────────────────────────────────────────────
+
+export async function fetchWeeklyMetrics(
+  projectId: string,
+  weeks = 26,
+): Promise<WeeklyMetrics[]> {
+  try {
+    return await get<WeeklyMetrics[]>(
+      `/api/projects/${projectId}/metrics/weekly?weeks=${weeks}`,
+    );
+  } catch {
+    return mockWeekly(projectId);
+  }
+}
+
+export async function fetchDailyMetrics(
+  projectId: string,
+  days = 28,
+): Promise<DailyMetrics[]> {
+  try {
+    return await get<DailyMetrics[]>(
+      `/api/projects/${projectId}/metrics/daily?days=${days}`,
+    );
+  } catch {
+    return mockDaily(projectId);
+  }
+}
+
+// ── Alerts ──────────────────────────────────────────────────────────────────
+
+export interface AlertFilters {
+  type?: string;
+  severity?: string;
+  status?: string;
+}
+
+export async function fetchAlerts(
+  projectId: string,
+  filters?: AlertFilters,
+): Promise<Alert[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.type && filters.type !== "all") params.set("type", filters.type);
+    if (filters?.severity && filters.severity !== "all") params.set("severity", filters.severity);
+    if (filters?.status && filters.status !== "all") params.set("status", filters.status);
+    const qs = params.toString();
+    return await get<Alert[]>(
+      `/api/projects/${projectId}/alerts${qs ? `?${qs}` : ""}`,
+    );
+  } catch {
+    return mockAlerts(projectId);
+  }
+}
+
+export async function updateAlertStatus(
+  projectId: string,
+  alertId: string,
+  status: string,
+): Promise<Alert> {
+  return patch<Alert>(`/api/projects/${projectId}/alerts/${alertId}`, {
+    status,
+  });
+}
+
+// ── Heatmap ─────────────────────────────────────────────────────────────────
+
+export interface HeatmapCell {
+  dayOfWeek: number;
+  hour: number;
+  count: number;
+}
+
+export async function fetchHeatmap(
+  projectId: string,
+): Promise<HeatmapCell[]> {
+  try {
+    return await get<HeatmapCell[]>(
+      `/api/projects/${projectId}/activity/heatmap`,
+    );
+  } catch {
+    return [];
+  }
+}
+
+// ── Snapshots ───────────────────────────────────────────────────────────────
+
+export async function fetchSnapshotDates(projectId: string): Promise<string[]> {
+  try {
+    return await get<string[]>(`/api/projects/${projectId}/snapshot/dates`);
+  } catch {
+    return [];
+  }
+}
+
+export function snapshotUrl(projectId: string, date: string): string {
+  return `${API_URL}/api/projects/${projectId}/snapshot?date=${date}`;
+}
+
+// ── Sync ────────────────────────────────────────────────────────────────────
+
+export async function fetchSyncStatus(projectId: string) {
+  return get<Record<string, unknown>>(`/api/projects/${projectId}/sync/status`);
+}
+
+export async function triggerSync(projectId: string) {
+  return post<Record<string, unknown>>(
+    `/api/projects/${projectId}/sync/trigger`,
+  );
+}

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useProject } from "@/lib/project-context";
-import { getWeeklyMetrics } from "@/lib/mock-data";
+import { fetchWeeklyMetrics } from "@/lib/api";
+import { useApi } from "@/lib/use-api";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -12,8 +13,11 @@ import { FileDown, FileText, Eye } from "lucide-react";
 
 export default function ReportsPage() {
   const { currentProject } = useProject();
-  const weekly = getWeeklyMetrics(currentProject.id);
-  const latest = weekly[weekly.length - 1];
+
+  const { data: weekly, loading } = useApi(
+    () => fetchWeeklyMetrics(currentProject.id, 26),
+    [currentProject.id],
+  );
 
   const [timeframe, setTimeframe] = useState("12w");
   const [includeCharts, setIncludeCharts] = useState(true);
@@ -25,6 +29,12 @@ export default function ReportsPage() {
     { value: "12w", label: "Last 12 weeks" },
     { value: "26w", label: "Last 26 weeks" },
   ];
+
+  if (loading || !weekly) {
+    return <div className="py-12 text-center text-muted">Loading…</div>;
+  }
+
+  const latest = weekly[weekly.length - 1];
 
   return (
     <div className="space-y-6">
@@ -67,7 +77,7 @@ export default function ReportsPage() {
 
         {/* Preview */}
         <Card className={showPreview ? "" : "flex items-center justify-center"}>
-          {showPreview ? (
+          {showPreview && latest ? (
             <>
               <div className="mb-4 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-muted" />

@@ -50,36 +50,32 @@ export default function ProgressPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">Progress</h1>
-
-        <div className="flex flex-wrap items-center gap-4">
-          <Tabs defaultValue={timeframe}>
-            <TabsList>
-              {(["4w", "12w", "26w"] as Timeframe[]).map((tf) => (
-                <TabsTrigger
-                  key={tf}
-                  value={tf}
-                  className={timeframe === tf ? "" : ""}
-                >
-                  <button onClick={() => setTimeframe(tf)} className="cursor-pointer">
-                    {tf}
-                  </button>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <Toggle
-            label="Working hours"
-            checked={workingHoursOnly}
-            onChange={setWorkingHoursOnly}
-          />
-          <Toggle
-            label="Weather norm."
-            checked={weatherNorm}
-            onChange={setWeatherNorm}
-          />
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-4">
+        <Tabs defaultValue={timeframe}>
+          <TabsList>
+            {(["4w", "12w", "26w"] as Timeframe[]).map((tf) => (
+              <TabsTrigger
+                key={tf}
+                value={tf}
+                className={timeframe === tf ? "" : ""}
+              >
+                <button onClick={() => setTimeframe(tf)} className="cursor-pointer">
+                  {tf}
+                </button>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <Toggle
+          label="Working hours"
+          checked={workingHoursOnly}
+          onChange={setWorkingHoursOnly}
+        />
+        <Toggle
+          label="Weather norm."
+          checked={weatherNorm}
+          onChange={setWeatherNorm}
+        />
       </div>
 
       {/* Main chart */}
@@ -170,3 +166,4 @@ export default function ProgressPage() {
     </div>
   );
 }
+

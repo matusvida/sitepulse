@@ -1,4 +1,4 @@
-import type { Project, WeeklyMetrics, DailyMetrics, Alert } from "./types";
+import type { Project, WeeklyMetrics, DailyMetrics, Alert, PlanData, PlanMilestone, ProgressReport } from "./types";
 import {
   projects as mockProjects,
   getWeeklyMetrics as mockWeekly,
@@ -169,4 +169,61 @@ export async function triggerSync(projectId: string) {
   return post<Record<string, unknown>>(
     `/api/projects/${projectId}/sync/trigger`,
   );
+}
+
+// ── Plan ────────────────────────────────────────────────────────────────────
+
+export async function fetchPlan(projectId: string): Promise<PlanData> {
+  return get<PlanData>(`/api/projects/${projectId}/plan`);
+}
+
+export async function fetchMilestones(projectId: string): Promise<PlanMilestone[]> {
+  return get<PlanMilestone[]>(`/api/projects/${projectId}/plan/milestones`);
+}
+
+export async function uploadPlan(projectId: string, file: File): Promise<Record<string, unknown>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/api/projects/${projectId}/plan/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Upload failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateMilestone(
+  projectId: string,
+  milestoneId: number,
+  data: Partial<Pick<PlanMilestone, "title" | "description" | "expectedState" | "status">>,
+): Promise<void> {
+  await patch(`/api/projects/${projectId}/plan/milestones/${milestoneId}`, data);
+}
+
+export async function triggerPlanCheck(projectId: string): Promise<Record<string, unknown>> {
+  return post<Record<string, unknown>>(`/api/projects/${projectId}/plan/check`);
+}
+
+// ── Reports ─────────────────────────────────────────────────────────────────
+
+export async function generateReport(
+  projectId: string,
+  dateFrom: string,
+  dateTo: string,
+): Promise<ProgressReport> {
+  return post<ProgressReport>(`/api/projects/${projectId}/reports/generate`, {
+    dateFrom,
+    dateTo,
+  });
+}
+
+export async function fetchReports(projectId: string): Promise<ProgressReport[]> {
+  return get<ProgressReport[]>(`/api/projects/${projectId}/reports`);
+}
+
+export async function fetchReport(projectId: string, reportId: number): Promise<ProgressReport> {
+  return get<ProgressReport>(`/api/projects/${projectId}/reports/${reportId}`);
 }

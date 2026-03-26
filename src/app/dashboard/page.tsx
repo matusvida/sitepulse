@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
+import Link from "next/link";
 import { useProject } from "@/lib/project-context";
-import { fetchWeeklyMetrics, fetchAlerts } from "@/lib/api";
+import { fetchWeeklyMetrics, fetchAlerts, fetchPlan } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
@@ -22,6 +24,8 @@ import {
   ShieldAlert,
   MapPin,
   Camera,
+  ClipboardList,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function OverviewPage() {
@@ -35,6 +39,26 @@ export default function OverviewPage() {
     () => fetchAlerts(currentProject.id),
     [currentProject.id],
   );
+  const { data: planData } = useApi(
+    () => fetchPlan(currentProject.id),
+    [currentProject.id],
+  );
+
+  const scheduleAlerts = useMemo(
+    () => (alerts ?? []).filter((a) => a.type === "schedule" && a.status === "open"),
+    [alerts],
+  );
+
+  const planStats = useMemo(() => {
+    const milestones = planData?.milestones ?? [];
+    if (!milestones.length) return null;
+    return {
+      total: milestones.length,
+      completed: milestones.filter((m) => m.status === "completed").length,
+      delayed: milestones.filter((m) => m.status === "delayed").length,
+      onTrack: milestones.filter((m) => m.status === "on_track").length,
+    };
+  }, [planData]);
 
   if (loadingW || loadingA || !weekly || !alerts) {
     return <div className="py-12 text-center text-muted">Loading…</div>;
@@ -110,8 +134,28 @@ export default function OverviewPage() {
         </div>
       </div>
 
+      {/* Schedule alert banner */}
+      {scheduleAlerts.length > 0 && (
+        <Link
+          href="/dashboard/alerts"
+          className="flex items-start gap-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 transition-colors hover:bg-orange-100"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-orange-900">
+              {scheduleAlerts.length} schedule {scheduleAlerts.length === 1 ? "delay" : "delays"} detected
+            </p>
+            <p className="mt-0.5 text-xs text-orange-700">
+              {scheduleAlerts[0].summary}
+              {scheduleAlerts.length > 1 && ` and ${scheduleAlerts.length - 1} more`}
+            </p>
+          </div>
+          <Badge variant="high" className="shrink-0">View</Badge>
+        </Link>
+      )}
+
       {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map((kpi) => (
           <Card key={kpi.label} className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
@@ -130,6 +174,38 @@ export default function OverviewPage() {
             </div>
           </Card>
         ))}
+
+        {/* Plan Status KPI */}
+        <Card className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
+            <ClipboardList className="h-4 w-4 text-muted" />
+          </div>
+          <div>
+            <p className="text-xs text-muted">Plan Status</p>
+            {planStats ? (
+              <>
+                <p className="text-lg font-semibold leading-tight">
+                  {planStats.completed}/{planStats.total}
+                </p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {planStats.delayed > 0
+                    ? `${planStats.delayed} delayed`
+                    : "On schedule"}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-muted">No plan</p>
+                <Link
+                  href="/dashboard/plan"
+                  className="mt-0.5 text-xs text-primary hover:underline"
+                >
+                  Upload plan
+                </Link>
+              </>
+            )}
+          </div>
+        </Card>
       </div>
 
       {/* Charts */}

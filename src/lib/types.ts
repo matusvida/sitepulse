@@ -40,3 +40,45 @@ export type AlertSeverity = Alert["severity"];
 export type AlertStatus = Alert["status"];
 
 export type Timeframe = "4w" | "12w" | "26w";
+
+// ── Plan ────────────────────────────────────────────────────────────────────
+
+export type MilestoneStatus = "not_started" | "on_track" | "delayed" | "completed";
+
+export interface ConstructionPlan {
+  id: number;
+  filename: string;
+  status: string;
+  createdAt: string | null;
+}
+
+export interface PlanMilestone {
+  id: number;
+  weekNumber: number;
+  title: string;
+  description: string;
+  expectedState: string;
+  actualState: string | null;
+  status: MilestoneStatus;
+  checkedAt: string | null;
+  createdAt: string | null;
+}
+
+export interface PlanData {
+  plan: ConstructionPlan | null;
+  milestones: PlanMilestone[];
+}
+
+// ── Reports ─────────────────────────────────────────────────────────────────
+
+export interface ProgressReport {
+  id: number;
+  reportType: string;
+  contentMd?: string;
+  summary: string;
+  dateRangeStart: string | null;
+  dateRangeEnd: string | null;
+  imageCount: number;
+  modelUsed: string;
+  createdAt: string | null;
+}

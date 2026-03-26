@@ -1,144 +1,226 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
+import Markdown from "react-markdown";
 import { useProject } from "@/lib/project-context";
-import { fetchWeeklyMetrics } from "@/lib/api";
+import { generateReport, fetchReports, fetchReport, fetchSnapshotDates } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { Toggle } from "@/components/ui/toggle";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, FileText, Eye } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+import type { ProgressReport } from "@/lib/types";
+import { Sparkles, Loader2, FileText, Calendar, Image, Clock } from "lucide-react";
 
 export default function ReportsPage() {
   const { currentProject } = useProject();
 
-  const { data: weekly, loading } = useApi(
-    () => fetchWeeklyMetrics(currentProject.id, 26),
+  const { data: dates } = useApi(
+    () => fetchSnapshotDates(currentProject.id),
+    [currentProject.id],
+  );
+  const { data: reports, loading: loadingList, refetch } = useApi(
+    () => fetchReports(currentProject.id),
     [currentProject.id],
   );
 
-  const [timeframe, setTimeframe] = useState("12w");
-  const [includeCharts, setIncludeCharts] = useState(true);
-  const [includeSnapshots, setIncludeSnapshots] = useState(true);
-  const [showPreview, setShowPreview] = useState(false);
+  const sortedDates = useMemo(() => (dates ?? []).slice().sort(), [dates]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [activeReport, setActiveReport] = useState<ProgressReport | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
-  const timeframeOptions = [
-    { value: "4w", label: "Last 4 weeks" },
-    { value: "12w", label: "Last 12 weeks" },
-    { value: "26w", label: "Last 26 weeks" },
-  ];
+  const effectiveFrom = dateFrom || sortedDates[0] || "";
+  const effectiveTo = dateTo || sortedDates[sortedDates.length - 1] || "";
 
-  if (loading || !weekly) {
-    return <div className="py-12 text-center text-muted">Loading…</div>;
-  }
+  const dateOptions = useMemo(
+    () => sortedDates.map((d) => ({ value: d, label: d })),
+    [sortedDates],
+  );
 
-  const latest = weekly[weekly.length - 1];
+  const handleGenerate = useCallback(async () => {
+    if (!effectiveFrom || !effectiveTo) return;
+    setGenerating(true);
+    setGenError(null);
+    try {
+      const report = await generateReport(currentProject.id, effectiveFrom, effectiveTo);
+      setActiveReport(report);
+      refetch();
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  }, [currentProject.id, effectiveFrom, effectiveTo, refetch]);
+
+  const handleViewReport = useCallback(
+    async (reportId: number) => {
+      setLoadingDetail(true);
+      try {
+        const detail = await fetchReport(currentProject.id, reportId);
+        setActiveReport(detail);
+      } catch {
+        // silently degrade
+      } finally {
+        setLoadingDetail(false);
+      }
+    },
+    [currentProject.id],
+  );
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Reports</h1>
+      <h1 className="text-xl font-semibold">AI Reports</h1>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Form */}
-        <Card>
-          <CardTitle>Generate Investor Report</CardTitle>
-          <CardContent className="mt-4 space-y-4">
+      {/* Generate section */}
+      <Card>
+        <CardTitle className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" />
+          Generate Progress Report
+        </CardTitle>
+        <CardContent className="mt-4">
+          <div className="flex flex-wrap items-end gap-4">
             <Select
-              id="report-timeframe"
-              label="Timeframe"
-              options={timeframeOptions}
-              value={timeframe}
-              onChange={(e) => setTimeframe(e.target.value)}
+              id="date-from"
+              label="From"
+              options={dateOptions}
+              value={effectiveFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
             />
-            <Toggle
-              label="Include charts"
-              checked={includeCharts}
-              onChange={setIncludeCharts}
+            <Select
+              id="date-to"
+              label="To"
+              options={dateOptions}
+              value={effectiveTo}
+              onChange={(e) => setDateTo(e.target.value)}
             />
-            <Toggle
-              label="Include snapshot comparison"
-              checked={includeSnapshots}
-              onChange={setIncludeSnapshots}
-            />
-            <div className="flex gap-3 pt-2">
-              <Button onClick={() => setShowPreview(true)}>
-                <Eye className="h-4 w-4" />
-                Preview
-              </Button>
-              <Button variant="outline" onClick={() => alert("PDF export is a mock feature")}>
-                <FileDown className="h-4 w-4" />
-                Export PDF
-              </Button>
+            <Button
+              onClick={handleGenerate}
+              disabled={generating || !effectiveFrom || !effectiveTo}
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {generating ? "Generating..." : "Generate Report"}
+            </Button>
+          </div>
+          {genError && (
+            <p className="mt-3 text-sm text-destructive">{genError}</p>
+          )}
+          {generating && (
+            <p className="mt-3 text-sm text-muted">
+              Analyzing site photos with GPT-4o Vision. This may take 30-60 seconds...
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        {/* Report history sidebar */}
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-muted px-1">Report History</h2>
+          {loadingList ? (
+            <p className="px-1 text-sm text-muted">Loading...</p>
+          ) : !reports || reports.length === 0 ? (
+            <Card className="py-6 text-center">
+              <FileText className="mx-auto mb-2 h-6 w-6 text-muted opacity-30" />
+              <p className="text-xs text-muted">No reports yet</p>
+            </Card>
+          ) : (
+            reports.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => handleViewReport(r.id)}
+                className={`w-full rounded-lg border p-3 text-left transition-colors cursor-pointer ${
+                  activeReport?.id === r.id
+                    ? "border-primary bg-primary/5"
+                    : "hover:bg-accent"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <Badge variant="outline" className="text-[10px]">
+                    {r.reportType}
+                  </Badge>
+                  <span className="text-[10px] text-muted">
+                    {r.createdAt ? formatDate(r.createdAt) : ""}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs font-medium line-clamp-2">
+                  {r.summary || "Progress report"}
+                </p>
+                <div className="mt-1 flex items-center gap-2 text-[10px] text-muted">
+                  {r.dateRangeStart && r.dateRangeEnd && (
+                    <span className="flex items-center gap-0.5">
+                      <Calendar className="h-2.5 w-2.5" />
+                      {r.dateRangeStart} — {r.dateRangeEnd}
+                    </span>
+                  )}
+                  {r.imageCount != null && (
+                    <span className="flex items-center gap-0.5">
+                      <Image className="h-2.5 w-2.5" />
+                      {r.imageCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Report viewer */}
+        <Card className="min-h-[400px]">
+          {loadingDetail ? (
+            <div className="flex h-full items-center justify-center py-20">
+              <Loader2 className="h-6 w-6 animate-spin text-muted" />
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Preview */}
-        <Card className={showPreview ? "" : "flex items-center justify-center"}>
-          {showPreview && latest ? (
+          ) : activeReport?.contentMd ? (
             <>
-              <div className="mb-4 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted" />
-                <CardTitle>Report Preview</CardTitle>
+              <div className="mb-4 flex flex-wrap items-center gap-3 border-b pb-4">
+                <Badge variant="default">{activeReport.reportType}</Badge>
+                {activeReport.dateRangeStart && activeReport.dateRangeEnd && (
+                  <span className="flex items-center gap-1 text-xs text-muted">
+                    <Calendar className="h-3 w-3" />
+                    {activeReport.dateRangeStart} — {activeReport.dateRangeEnd}
+                  </span>
+                )}
+                {activeReport.imageCount != null && (
+                  <span className="flex items-center gap-1 text-xs text-muted">
+                    <Image className="h-3 w-3" />
+                    {activeReport.imageCount} photos analyzed
+                  </span>
+                )}
+                {activeReport.modelUsed && (
+                  <span className="flex items-center gap-1 text-xs text-muted">
+                    <Sparkles className="h-3 w-3" />
+                    {activeReport.modelUsed}
+                  </span>
+                )}
+                {activeReport.createdAt && (
+                  <span className="flex items-center gap-1 text-xs text-muted ml-auto">
+                    <Clock className="h-3 w-3" />
+                    {formatDate(activeReport.createdAt)}
+                  </span>
+                )}
               </div>
-              <CardContent className="space-y-4">
-                <div className="rounded-lg border bg-accent/30 p-4">
-                  <h3 className="font-semibold">{currentProject.name}</h3>
-                  <p className="text-xs text-muted">{currentProject.location}</p>
-                  <p className="mt-1 text-xs text-muted">
-                    Report period: {timeframe === "4w" ? "Last 4 weeks" : timeframe === "12w" ? "Last 12 weeks" : "Last 26 weeks"}
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="mb-2 text-sm font-medium">Executive Summary</h4>
-                  <p className="text-sm text-muted">
-                    Construction at {currentProject.name} is progressing with a weekly delta of{" "}
-                    <strong className="text-foreground">{latest.progressDelta}%</strong>. Site
-                    activity levels remain healthy with an index of{" "}
-                    <strong className="text-foreground">{latest.activityIndex.toFixed(0)}</strong> and{" "}
-                    <strong className="text-foreground">{latest.activeHours}h</strong> of active work
-                    in the last period. Current delay risk is assessed as{" "}
-                    <Badge variant={latest.riskLevel === "Low" ? "low" : latest.riskLevel === "Medium" ? "medium" : "high"}>
-                      {latest.riskLevel}
-                    </Badge>.
-                  </p>
-                </div>
-
-                {includeCharts && (
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium">Charts</h4>
-                    <div className="flex aspect-[2/1] items-center justify-center rounded-lg border bg-accent/50 text-xs text-muted">
-                      Progress & Activity charts would render here
-                    </div>
-                  </div>
-                )}
-
-                {includeSnapshots && (
-                  <div>
-                    <h4 className="mb-2 text-sm font-medium">Snapshot Comparison</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex aspect-video items-center justify-center rounded-lg border bg-accent/50 text-xs text-muted">
-                        Before
-                      </div>
-                      <div className="flex aspect-video items-center justify-center rounded-lg border bg-accent/50 text-xs text-muted">
-                        After
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-t pt-3 text-xs text-muted">
-                  Generated by SitePulse · {new Date().toLocaleDateString()}
-                </div>
-              </CardContent>
+              <div className="prose prose-sm prose-zinc max-w-none [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_p]:text-sm [&_p]:text-muted [&_li]:text-sm [&_li]:text-muted [&_strong]:text-foreground">
+                <Markdown>{activeReport.contentMd}</Markdown>
+              </div>
             </>
           ) : (
-            <div className="text-center text-sm text-muted">
-              <FileText className="mx-auto mb-2 h-8 w-8 opacity-30" />
-              <p>Configure and click Preview to see the report</p>
+            <div className="flex h-full flex-col items-center justify-center py-20 text-center">
+              <FileText className="mb-3 h-10 w-10 text-muted opacity-20" />
+              <p className="text-sm text-muted">
+                Select a report from the sidebar, or generate a new one.
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                AI reports analyze site photos and metrics to assess
+                construction progress.
+              </p>
             </div>
           )}
         </Card>

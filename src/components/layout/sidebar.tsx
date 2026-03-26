@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   TrendingUp,
-  Activity,
+  ClipboardList,
   Bell,
   FileText,
   Settings,
@@ -16,7 +16,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/progress", label: "Progress", icon: TrendingUp },
-  { href: "/dashboard/activity", label: "Activity", icon: Activity },
+  { href: "/dashboard/plan", label: "Plan", icon: ClipboardList },
   { href: "/dashboard/alerts", label: "Alerts", icon: Bell },
   { href: "/dashboard/reports", label: "Reports", icon: FileText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },

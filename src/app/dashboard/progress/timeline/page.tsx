@@ -161,6 +161,18 @@ export default function TimelinePage() {
   const activeDateIdx = dateIndex ?? (sortedDates.length > 0 ? sortedDates.length - 1 : 0);
   const activeDate = sortedDates[activeDateIdx] ?? "";
 
+  // Prefetch adjacent images so next/prev navigation is instant
+  useEffect(() => {
+    if (sortedDates.length < 2) return;
+    const toPrefetch = [activeDateIdx - 2, activeDateIdx - 1, activeDateIdx + 1, activeDateIdx + 2];
+    for (const idx of toPrefetch) {
+      if (idx >= 0 && idx < sortedDates.length) {
+        const img = new Image();
+        img.src = snapshotUrl(currentProject.id, sortedDates[idx]);
+      }
+    }
+  }, [activeDateIdx, sortedDates, currentProject.id]);
+
   const handleSlider = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setDateIndex(Number(e.target.value));

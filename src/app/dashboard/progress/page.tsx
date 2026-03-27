@@ -51,17 +51,11 @@ export default function ProgressPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-end gap-4">
-        <Tabs defaultValue={timeframe}>
+        <Tabs defaultValue={timeframe} onValueChange={(v) => setTimeframe(v as Timeframe)}>
           <TabsList>
             {(["4w", "12w", "26w"] as Timeframe[]).map((tf) => (
-              <TabsTrigger
-                key={tf}
-                value={tf}
-                className={timeframe === tf ? "" : ""}
-              >
-                <button onClick={() => setTimeframe(tf)} className="cursor-pointer">
-                  {tf}
-                </button>
+              <TabsTrigger key={tf} value={tf}>
+                {tf}
               </TabsTrigger>
             ))}
           </TabsList>

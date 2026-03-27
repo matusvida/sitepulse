@@ -6,6 +6,7 @@ import { createContext, useContext, useState, useCallback } from "react";
 interface TabsContextValue {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  onValueChange?: (value: string) => void;
 }
 
 const TabsContext = createContext<TabsContextValue | null>(null);
@@ -20,12 +21,13 @@ interface TabsProps {
   defaultValue: string;
   children: React.ReactNode;
   className?: string;
+  onValueChange?: (value: string) => void;
 }
 
-export function Tabs({ defaultValue, children, className }: TabsProps) {
+export function Tabs({ defaultValue, children, className, onValueChange }: TabsProps) {
   const [activeTab, setActiveTab] = useState(defaultValue);
   return (
-    <TabsContext.Provider value={{ activeTab, setActiveTab }}>
+    <TabsContext.Provider value={{ activeTab, setActiveTab, onValueChange }}>
       <div className={className}>{children}</div>
     </TabsContext.Provider>
   );
@@ -57,10 +59,13 @@ interface TabsTriggerProps {
 }
 
 export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
-  const { activeTab, setActiveTab } = useTabs();
+  const { activeTab, setActiveTab, onValueChange } = useTabs();
   const isActive = activeTab === value;
 
-  const handleClick = useCallback(() => setActiveTab(value), [setActiveTab, value]);
+  const handleClick = useCallback(() => {
+    setActiveTab(value);
+    onValueChange?.(value);
+  }, [setActiveTab, value, onValueChange]);
 
   return (
     <button

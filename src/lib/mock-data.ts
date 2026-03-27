@@ -2,7 +2,7 @@ import { Project, WeeklyMetrics, DailyMetrics, Alert } from "./types";
 
 export const projects: Project[] = [
   {
-    id: "proj-1",
+    id: "1",
     name: "Riverside Tower",
     location: "Prague 5, Czech Republic",
     coveragePercent: 87,
@@ -10,7 +10,7 @@ export const projects: Project[] = [
     lastSnapshotAt: "2026-02-26T08:15:00Z",
   },
   {
-    id: "proj-2",
+    id: "2",
     name: "Metro Line D – Station Olbrachtova",
     location: "Prague 4, Czech Republic",
     coveragePercent: 72,
@@ -18,7 +18,7 @@ export const projects: Project[] = [
     lastSnapshotAt: "2026-02-26T07:45:00Z",
   },
   {
-    id: "proj-3",
+    id: "3",
     name: "Greenfield Logistics Hub",
     location: "Brno, Czech Republic",
     coveragePercent: 94,
@@ -30,9 +30,9 @@ export const projects: Project[] = [
 function generateWeeklyMetrics(projectId: string): WeeklyMetrics[] {
   const baseDate = new Date("2025-12-01");
   const seeds: Record<string, number> = {
-    "proj-1": 42,
-    "proj-2": 17,
-    "proj-3": 88,
+    "1": 42,
+    "2": 17,
+    "3": 88,
   };
   const seed = seeds[projectId] ?? 50;
 
@@ -54,9 +54,9 @@ function generateWeeklyMetrics(projectId: string): WeeklyMetrics[] {
 function generateDailyMetrics(projectId: string): DailyMetrics[] {
   const baseDate = new Date("2026-02-01");
   const seeds: Record<string, number> = {
-    "proj-1": 33,
-    "proj-2": 71,
-    "proj-3": 12,
+    "1": 33,
+    "2": 71,
+    "3": 12,
   };
   const seed = seeds[projectId] ?? 40;
 
@@ -79,7 +79,7 @@ function generateDailyMetrics(projectId: string): DailyMetrics[] {
 
 function generateAlerts(projectId: string): Alert[] {
   const alertsMap: Record<string, Alert[]> = {
-    "proj-1": [
+    "1": [
       {
         id: "alert-1",
         createdAt: "2026-02-26T06:30:00Z",
@@ -154,7 +154,7 @@ function generateAlerts(projectId: string): Alert[] {
         ],
       },
     ],
-    "proj-2": [
+    "2": [
       {
         id: "alert-6",
         createdAt: "2026-02-26T05:00:00Z",
@@ -184,7 +184,7 @@ function generateAlerts(projectId: string): Alert[] {
         ],
       },
     ],
-    "proj-3": [
+    "3": [
       {
         id: "alert-8",
         createdAt: "2026-02-25T10:00:00Z",

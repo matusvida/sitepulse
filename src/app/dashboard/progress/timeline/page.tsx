@@ -4,8 +4,12 @@ import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useProject } from "@/lib/project-context";
 import { fetchSnapshotDates, snapshotUrl } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
+import { useImagePreloader } from "@/lib/use-image-preloader";
+import { useTimelinePlayback } from "@/lib/use-timeline-playback";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { ImageOff, ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
+import { ImageOff, ChevronLeft, ChevronRight, Play, Pause, Loader2 } from "lucide-react";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 interface Week {
   label: string;
@@ -51,6 +55,8 @@ function formatShortDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
+
+// ── WeekPicker ───────────────────────────────────────────────────────────────
 
 function WeekPicker({
   weeks,
@@ -138,6 +144,153 @@ function WeekPicker({
   );
 }
 
+// ── SnapshotViewer ───────────────────────────────────────────────────────────
+//
+// This is the core image display component. It uses a double-buffer approach
+// where TWO <img> elements are always mounted with stable `src` attributes.
+// The crucial difference from the old implementation:
+//
+//   1. No `key` prop that forces DOM re-creation (which caused white flashes).
+//   2. The incoming image's opacity stays at 0 until its `onLoad` fires,
+//      guaranteeing we never show a half-loaded or blank image.
+//   3. The outgoing image remains fully visible until the incoming one is ready.
+//
+// The "committed" image is the one currently fully visible. A "pending" image
+// is loaded in the hidden layer. Only after it loads do we crossfade.
+
+interface SnapshotViewerProps {
+  currentUrl: string;
+  currentDate: string;
+  isReady: (url: string) => boolean;
+  waitForImage: (url: string) => Promise<HTMLImageElement>;
+  onError: () => void;
+}
+
+function SnapshotViewer({
+  currentUrl,
+  currentDate,
+  isReady,
+  waitForImage,
+  onError,
+}: SnapshotViewerProps) {
+  // Track which layer (A or B) is the "committed" (visible) one.
+  // We use a ref for activeLayer because commitImage is called from
+  // async contexts (promise callbacks) where state closures would be stale.
+  const [layerA, setLayerA] = useState(currentUrl);
+  const [layerB, setLayerB] = useState(currentUrl);
+  const [layerAVisible, setLayerAVisible] = useState(true);
+  const activeLayerRef = useRef<"A" | "B">("A");
+  const committedUrlRef = useRef(currentUrl);
+  const pendingLoadRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const commitImage = useCallback((url: string) => {
+    // Place the new URL in the HIDDEN layer, then crossfade.
+    // The double-rAF ensures the browser has actually set the src
+    // and decoded the image before we trigger the opacity transition.
+    if (activeLayerRef.current === "A") {
+      // A is visible -> load into B -> reveal B
+      setLayerB(url);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!mountedRef.current) return;
+          setLayerAVisible(false);
+          activeLayerRef.current = "B";
+          committedUrlRef.current = url;
+          pendingLoadRef.current = null;
+        });
+      });
+    } else {
+      // B is visible -> load into A -> reveal A
+      setLayerA(url);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!mountedRef.current) return;
+          setLayerAVisible(true);
+          activeLayerRef.current = "A";
+          committedUrlRef.current = url;
+          pendingLoadRef.current = null;
+        });
+      });
+    }
+  }, []);
+
+  // When currentUrl changes, begin loading it in the hidden layer.
+  // Only after it is fully decoded do we crossfade. The old image
+  // remains 100% visible until then -- zero white flashes.
+  useEffect(() => {
+    const targetUrl = currentUrl;
+
+    // Already showing this URL -- nothing to do
+    if (targetUrl === committedUrlRef.current) return;
+    // Already loading this exact URL as pending
+    if (targetUrl === pendingLoadRef.current) return;
+
+    pendingLoadRef.current = targetUrl;
+
+    // If the preloader already has this image decoded, swap instantly.
+    if (isReady(targetUrl)) {
+      commitImage(targetUrl);
+      return;
+    }
+
+    // Otherwise, start loading and wait for decode to finish.
+    waitForImage(targetUrl)
+      .then(() => {
+        if (!mountedRef.current) return;
+        // Only commit if this is still the URL we want (handles rapid clicking)
+        if (pendingLoadRef.current === targetUrl) {
+          commitImage(targetUrl);
+        }
+      })
+      .catch(() => {
+        if (!mountedRef.current) return;
+        if (pendingLoadRef.current === targetUrl) {
+          onError();
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUrl, commitImage]);
+
+  return (
+    <>
+      {/* Layer A */}
+      <img
+        src={layerA}
+        alt={`Site snapshot — ${currentDate}`}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          opacity: layerAVisible ? 1 : 0,
+          transition: "opacity 200ms ease-in-out",
+          // Ensure the visible layer is painted on top
+          zIndex: layerAVisible ? 1 : 0,
+        }}
+        // Suppress browser-native error handling; we handle via preloader
+        onError={onError}
+      />
+      {/* Layer B */}
+      <img
+        src={layerB}
+        alt={`Site snapshot — ${currentDate}`}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{
+          opacity: layerAVisible ? 0 : 1,
+          transition: "opacity 200ms ease-in-out",
+          zIndex: layerAVisible ? 0 : 1,
+        }}
+        onError={onError}
+      />
+    </>
+  );
+}
+
+// ── Main Page ────────────────────────────────────────────────────────────────
+
 export default function TimelinePage() {
   const { currentProject } = useProject();
 
@@ -153,41 +306,84 @@ export default function TimelinePage() {
 
   const weeks = useMemo(() => groupIntoWeeks(sortedDates), [sortedDates]);
 
+  // Build the full URL list for the preloader (memoized so the array
+  // reference is stable and doesn't trigger unnecessary re-renders).
+  const allUrls = useMemo(
+    () => sortedDates.map((d) => snapshotUrl(currentProject.id, d)),
+    [sortedDates, currentProject.id],
+  );
+
   const [dateIndex, setDateIndex] = useState<number | null>(null);
   const [imgError, setImgError] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isPlayMode, setIsPlayMode] = useState(false);
 
   const activeDateIdx = dateIndex ?? (sortedDates.length > 0 ? sortedDates.length - 1 : 0);
   const activeDate = sortedDates[activeDateIdx] ?? "";
+  const activeUrl = allUrls[activeDateIdx] ?? "";
 
-  // Prefetch adjacent images so next/prev navigation is instant
+  // ── Image preloader: manages a single cache of decoded images ────────────
+  // The `isPlayMode` flag makes it preload more aggressively forward (8 ahead
+  // instead of 4) so playback never stalls waiting for the next image.
+  const { waitForImage, isReady } = useImagePreloader(
+    allUrls,
+    activeDateIdx,
+    isPlayMode,
+  );
+
+  // ── Playback controller: only advances when next image is decoded ───────
+  const handleAdvance = useCallback((nextIndex: number) => {
+    setDateIndex(nextIndex);
+    setImgError(false);
+  }, []);
+
+  const canAdvance = useCallback(
+    (nextIndex: number) => {
+      if (nextIndex < 0 || nextIndex >= allUrls.length) return false;
+      return isReady(allUrls[nextIndex]);
+    },
+    [allUrls, isReady],
+  );
+
+  const { playing, waiting, toggle: togglePlay, stop: stopPlay, updateCurrentIndex } =
+    useTimelinePlayback({
+      totalFrames: sortedDates.length,
+      intervalMs: 800,
+      onAdvance: handleAdvance,
+      canAdvance,
+    });
+
+  // Sync play mode state for the preloader
   useEffect(() => {
-    if (sortedDates.length < 2) return;
-    const toPrefetch = [activeDateIdx - 2, activeDateIdx - 1, activeDateIdx + 1, activeDateIdx + 2];
-    for (const idx of toPrefetch) {
-      if (idx >= 0 && idx < sortedDates.length) {
-        const img = new Image();
-        img.src = snapshotUrl(currentProject.id, sortedDates[idx]);
-      }
-    }
-  }, [activeDateIdx, sortedDates, currentProject.id]);
+    setIsPlayMode(playing);
+  }, [playing]);
 
+  // Keep the playback controller aware of the current index
+  useEffect(() => {
+    updateCurrentIndex(activeDateIdx);
+  }, [activeDateIdx, updateCurrentIndex]);
+
+  // ── Navigation handlers ─────────────────────────────────────────────────
   const handleSlider = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setDateIndex(Number(e.target.value));
       setImgError(false);
-      setPlaying(false);
+      stopPlay();
     },
-    [],
+    [stopPlay],
   );
 
-  const handleDateSelect = useCallback((globalIndex: number) => {
-    setDateIndex(globalIndex);
-    setImgError(false);
-    setPlaying(false);
-  }, []);
+  const handleDateSelect = useCallback(
+    (globalIndex: number) => {
+      setDateIndex(globalIndex);
+      setImgError(false);
+      stopPlay();
+    },
+    [stopPlay],
+  );
 
+  // For arrow navigation: if the image is already decoded, navigate
+  // instantly. If not, start loading it and navigate anyway (the
+  // SnapshotViewer will hold the old image until the new one loads).
   const handlePrev = useCallback(() => {
     setDateIndex((prev) => Math.max(0, (prev ?? sortedDates.length - 1) - 1));
     setImgError(false);
@@ -200,28 +396,23 @@ export default function TimelinePage() {
     setImgError(false);
   }, [sortedDates.length]);
 
-  const togglePlay = useCallback(() => {
-    setPlaying((prev) => !prev);
-  }, []);
-
+  // Keyboard navigation
   useEffect(() => {
-    if (playing && sortedDates.length > 1) {
-      intervalRef.current = setInterval(() => {
-        setDateIndex((prev) => {
-          const current = prev ?? sortedDates.length - 1;
-          if (current >= sortedDates.length - 1) {
-            setPlaying(false);
-            return current;
-          }
-          setImgError(false);
-          return current + 1;
-        });
-      }, 1500);
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        togglePlay();
+      }
     }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [playing, sortedDates.length]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlePrev, handleNext, togglePlay]);
 
   if (loading) {
     return <div className="py-12 text-center text-muted">Loading...</div>;
@@ -304,11 +495,11 @@ export default function TimelinePage() {
           ) : (
             <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg border bg-zinc-50">
               {activeDate && !imgError ? (
-                <img
-                  key={activeDate}
-                  src={snapshotUrl(currentProject.id, activeDate)}
-                  alt={`Site snapshot — ${activeDate}`}
-                  className="h-full w-full object-cover"
+                <SnapshotViewer
+                  currentUrl={activeUrl}
+                  currentDate={activeDate}
+                  isReady={isReady}
+                  waitForImage={waitForImage}
                   onError={() => setImgError(true)}
                 />
               ) : (
@@ -318,12 +509,21 @@ export default function TimelinePage() {
                 </div>
               )}
 
-              <div className="absolute top-3 left-3 rounded bg-black/60 px-3 py-1.5 text-sm font-medium text-white">
+              {/* Date badge */}
+              <div className="absolute top-3 left-3 z-10 rounded bg-black/60 px-3 py-1.5 text-sm font-medium text-white">
                 {activeDate}
               </div>
-              <div className="absolute top-3 right-3 rounded bg-black/60 px-2 py-1 text-xs text-white/80">
+              {/* Counter badge */}
+              <div className="absolute top-3 right-3 z-10 rounded bg-black/60 px-2 py-1 text-xs text-white/80">
                 {activeDateIdx + 1} / {sortedDates.length}
               </div>
+              {/* Subtle loading indicator during playback when waiting for next image */}
+              {playing && waiting && (
+                <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1">
+                  <Loader2 className="h-3 w-3 animate-spin text-white/70" />
+                  <span className="text-[10px] text-white/70">Loading next...</span>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

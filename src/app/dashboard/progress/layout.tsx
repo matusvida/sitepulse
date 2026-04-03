@@ -3,21 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 import { BarChart3, Calendar, GitCompareArrows } from "lucide-react";
-
-const tabs = [
-  { href: "/dashboard/progress", label: "Charts", icon: BarChart3 },
-  { href: "/dashboard/progress/timeline", label: "Timeline", icon: Calendar },
-  { href: "/dashboard/progress/compare", label: "Compare", icon: GitCompareArrows },
-];
 
 export default function ProgressLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+  const tabs = [
+    { href: "/dashboard/progress", label: t("progressLayout.charts"), icon: BarChart3 },
+    { href: "/dashboard/progress/timeline", label: t("progressLayout.timeline"), icon: Calendar },
+    { href: "/dashboard/progress/compare", label: t("progressLayout.compare"), icon: GitCompareArrows },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Progress</h1>
+        <h1 className="text-xl font-semibold">{t("progressLayout.title")}</h1>
       </div>
 
       <nav className="flex gap-1 border-b pb-px">

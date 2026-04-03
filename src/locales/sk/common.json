@@ -1,0 +1,69 @@
+{
+  "common": {
+    "loading": "Načítavam...",
+    "view": "Zobraziť",
+    "noData": "Žiadne dáta",
+    "none": "Žiadne",
+    "andMore": "a ďalšie {{count}}"
+  },
+  "topNav": {
+    "toggleSidebar": "Prepnúť bočný panel",
+    "selectProject": "Vybrať projekt",
+    "switchLanguage": "Prepnúť jazyk"
+  },
+  "sidebar": {
+    "brand": "SitePulse",
+    "mainNavigation": "Hlavná navigácia",
+    "closeSidebar": "Zavrieť bočný panel",
+    "overview": "Prehľad",
+    "progress": "Postup",
+    "plan": "Plán",
+    "alerts": "Upozornenia",
+    "reports": "Reporty",
+    "settings": "Nastavenia"
+  },
+  "progressLayout": {
+    "title": "Postup",
+    "charts": "Grafy",
+    "timeline": "Časová os",
+    "compare": "Porovnanie"
+  },
+  "overview": {
+    "noMetrics": "Zatiaľ nie sú dostupné metriky. Najprv spustite analýzu.",
+    "cameraCoverage": "{{count}} kamier - pokrytie {{coverage}}%",
+    "lastSnapshot": "Posledná snímka: {{date}}",
+    "scheduleDelaysDetected": "Zistených {{count}} harmonogramových {{label}}",
+    "delaySingular": "meskanie",
+    "delayPlural": "meškaní",
+    "kpiWeeklyProgress": "Týždenný progres",
+    "kpiActivityIndex": "Index aktivity",
+    "kpiActiveHours": "Aktívne hodiny (7d)",
+    "kpiDelayRisk": "Riziko meškania",
+    "trendPrev": "+0,3% oproti minulému",
+    "trendAboveAvg": "Nad priemerom",
+    "trendOnTrack": "Podľa plánu",
+    "trendNoConcerns": "Bez rizika",
+    "trendMonitorClosely": "Sledovať pozorne",
+    "trendActionNeeded": "Vyžiadaná akcia",
+    "planStatus": "Stav plánu",
+    "planDelayed": "{{count}} oneskorené",
+    "planOnSchedule": "Podľa harmonogramu",
+    "noPlan": "Bez plánu",
+    "uploadPlan": "Nahrať plán",
+    "riskLow": "Nízke",
+    "riskMedium": "Stredné",
+    "riskHigh": "Vysoké",
+    "progressDeltaChart": "Delta progresu (12 týždňov)",
+    "activityIndexChart": "Index aktivity (12 týždňov)",
+    "tooltipProgressDelta": "Delta progresu",
+    "tooltipActivityIndex": "Index aktivity",
+    "tooltipWeekOf": "Týždeň od {{label}}",
+    "summaryTitle": "Zhrnutie týždňa",
+    "summaryProgress": "Delta progresu {{value}}% je v očakávanom rozsahu pre túto fázu výstavby.",
+    "summaryActivity": "Index aktivity {{value}} označuje bežnú úroveň aktivít na stavbe.",
+    "summaryActiveHours": "Za posledných 7 dní bolo evidovaných {{hours}}h aktívnej práce v {{count}} kamerových zónach.",
+    "summaryDelayRisk": "Riziko meškania je vyhodnotené ako",
+    "recentFlagsTitle": "Nedávne hlásenia",
+    "noRecentFlags": "Pre tento projekt nie sú žiadne nedávne hlásenia."
+  }
+}

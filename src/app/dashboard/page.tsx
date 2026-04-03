@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useProject } from "@/lib/project-context";
+import { useLanguage } from "@/lib/language-context";
 import { fetchWeeklyMetrics, fetchAlerts, fetchPlan } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { formatDateTime, timeAgo } from "@/lib/utils";
@@ -30,6 +31,7 @@ import {
 
 export default function OverviewPage() {
   const { currentProject } = useProject();
+  const { t } = useLanguage();
 
   const { data: weekly, loading: loadingW } = useApi(
     () => fetchWeeklyMetrics(currentProject.id, 26),
@@ -61,49 +63,59 @@ export default function OverviewPage() {
   }, [planData]);
 
   if (loadingW || loadingA || !weekly || !alerts) {
-    return <div className="py-12 text-center text-muted">Loading…</div>;
+    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
   }
 
   const latest = weekly[weekly.length - 1];
   if (!latest) {
     return (
       <div className="py-12 text-center text-muted">
-        No metrics data available yet. Run the analysis engine first.
+        {t("overview.noMetrics")}
       </div>
     );
   }
 
   const chartData = weekly.slice(-12);
+  const localizedRiskLevel =
+    latest.riskLevel === "Low"
+      ? t("overview.riskLow")
+      : latest.riskLevel === "Medium"
+        ? t("overview.riskMedium")
+        : t("overview.riskHigh");
 
   const kpis = [
     {
-      label: "Weekly Progress",
+      id: "weekly",
+      label: t("overview.kpiWeeklyProgress"),
       value: `${latest.progressDelta}%`,
       icon: TrendingUp,
-      trend: "+0.3% vs prev",
+      trend: t("overview.trendPrev"),
     },
     {
-      label: "Activity Index",
+      id: "activity",
+      label: t("overview.kpiActivityIndex"),
       value: latest.activityIndex.toFixed(0),
       icon: Activity,
-      trend: "Above avg",
+      trend: t("overview.trendAboveAvg"),
     },
     {
-      label: "Active Hours (7d)",
+      id: "hours",
+      label: t("overview.kpiActiveHours"),
       value: `${latest.activeHours}h`,
       icon: Clock,
-      trend: "On track",
+      trend: t("overview.trendOnTrack"),
     },
     {
-      label: "Delay Risk",
-      value: latest.riskLevel,
+      id: "risk",
+      label: t("overview.kpiDelayRisk"),
+      value: localizedRiskLevel,
       icon: ShieldAlert,
       trend:
         latest.riskLevel === "Low"
-          ? "No concerns"
+          ? t("overview.trendNoConcerns")
           : latest.riskLevel === "Medium"
-            ? "Monitor closely"
-            : "Action needed",
+            ? t("overview.trendMonitorClosely")
+            : t("overview.trendActionNeeded"),
     },
   ];
 
@@ -114,9 +126,18 @@ export default function OverviewPage() {
         ? "medium"
         : ("high" as const);
 
+  const summaryProgress = t("overview.summaryProgress", { value: latest.progressDelta });
+  const summaryProgressValue = `${latest.progressDelta}%`;
+  const [summaryProgressBefore = "", summaryProgressAfter = ""] =
+    summaryProgress.split(summaryProgressValue);
+
+  const summaryActivityValue = latest.activityIndex.toFixed(0);
+  const summaryActivity = t("overview.summaryActivity", { value: summaryActivityValue });
+  const [summaryActivityBefore = "", summaryActivityAfter = ""] =
+    summaryActivity.split(summaryActivityValue);
+
   return (
     <div className="space-y-6">
-      {/* Project header */}
       <div>
         <h1 className="text-xl font-semibold">{currentProject.name}</h1>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
@@ -126,15 +147,19 @@ export default function OverviewPage() {
           </span>
           <span className="inline-flex items-center gap-1">
             <Camera className="h-3.5 w-3.5" />
-            {currentProject.cameraCount} cameras · {currentProject.coveragePercent}% coverage
+            {t("overview.cameraCoverage", {
+              count: currentProject.cameraCount,
+              coverage: currentProject.coveragePercent,
+            })}
           </span>
           <span>
-            Last snapshot: {formatDateTime(currentProject.lastSnapshotAt)}
+            {t("overview.lastSnapshot", {
+              date: formatDateTime(currentProject.lastSnapshotAt),
+            })}
           </span>
         </div>
       </div>
 
-      {/* Schedule alert banner */}
       {scheduleAlerts.length > 0 && (
         <Link
           href="/dashboard/alerts"
@@ -143,28 +168,34 @@ export default function OverviewPage() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-orange-900">
-              {scheduleAlerts.length} schedule {scheduleAlerts.length === 1 ? "delay" : "delays"} detected
+              {t("overview.scheduleDelaysDetected", {
+                count: scheduleAlerts.length,
+                label:
+                  scheduleAlerts.length === 1
+                    ? t("overview.delaySingular")
+                    : t("overview.delayPlural"),
+              })}
             </p>
             <p className="mt-0.5 text-xs text-orange-700">
               {scheduleAlerts[0].summary}
-              {scheduleAlerts.length > 1 && ` and ${scheduleAlerts.length - 1} more`}
+              {scheduleAlerts.length > 1 &&
+                ` ${t("common.andMore", { count: scheduleAlerts.length - 1 })}`}
             </p>
           </div>
-          <Badge variant="high" className="shrink-0">View</Badge>
+          <Badge variant="high" className="shrink-0">{t("common.view")}</Badge>
         </Link>
       )}
 
-      {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} className="flex items-start gap-3">
+          <Card key={kpi.id} className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
               <kpi.icon className="h-4 w-4 text-muted" />
             </div>
             <div>
               <p className="text-xs text-muted">{kpi.label}</p>
               <p className="text-lg font-semibold leading-tight">
-                {kpi.label === "Delay Risk" ? (
+                {kpi.id === "risk" ? (
                   <Badge variant={riskVariant}>{kpi.value}</Badge>
                 ) : (
                   kpi.value
@@ -175,13 +206,12 @@ export default function OverviewPage() {
           </Card>
         ))}
 
-        {/* Plan Status KPI */}
         <Card className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent">
             <ClipboardList className="h-4 w-4 text-muted" />
           </div>
           <div>
-            <p className="text-xs text-muted">Plan Status</p>
+            <p className="text-xs text-muted">{t("overview.planStatus")}</p>
             {planStats ? (
               <>
                 <p className="text-lg font-semibold leading-tight">
@@ -189,18 +219,18 @@ export default function OverviewPage() {
                 </p>
                 <p className="mt-0.5 text-xs text-muted">
                   {planStats.delayed > 0
-                    ? `${planStats.delayed} delayed`
-                    : "On schedule"}
+                    ? t("overview.planDelayed", { count: planStats.delayed })
+                    : t("overview.planOnSchedule")}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm font-medium text-muted">No plan</p>
+                <p className="text-sm font-medium text-muted">{t("overview.noPlan")}</p>
                 <Link
                   href="/dashboard/plan"
                   className="mt-0.5 text-xs text-primary hover:underline"
                 >
-                  Upload plan
+                  {t("overview.uploadPlan")}
                 </Link>
               </>
             )}
@@ -208,10 +238,9 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardTitle>Progress Delta (12 weeks)</CardTitle>
+          <CardTitle>{t("overview.progressDeltaChart")}</CardTitle>
           <CardContent className="mt-4">
             <ChartWrapper>
               <AreaChart data={chartData}>
@@ -229,8 +258,8 @@ export default function OverviewPage() {
                 />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }}
-                  formatter={(value) => [`${value}%`, "Progress Delta"]}
-                  labelFormatter={(label) => `Week of ${label}`}
+                  formatter={(value) => [`${value}%`, t("overview.tooltipProgressDelta")]}
+                  labelFormatter={(label) => t("overview.tooltipWeekOf", { label })}
                 />
                 <Area
                   type="monotone"
@@ -246,7 +275,7 @@ export default function OverviewPage() {
         </Card>
 
         <Card>
-          <CardTitle>Activity Index (12 weeks)</CardTitle>
+          <CardTitle>{t("overview.activityIndexChart")}</CardTitle>
           <CardContent className="mt-4">
             <ChartWrapper>
               <AreaChart data={chartData}>
@@ -260,8 +289,8 @@ export default function OverviewPage() {
                 <YAxis tick={{ fontSize: 11 }} stroke="#a1a1aa" />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }}
-                  formatter={(value) => [Number(value).toFixed(1), "Activity Index"]}
-                  labelFormatter={(label) => `Week of ${label}`}
+                  formatter={(value) => [Number(value).toFixed(1), t("overview.tooltipActivityIndex")]}
+                  labelFormatter={(label) => t("overview.tooltipWeekOf", { label })}
                 />
                 <Area
                   type="monotone"
@@ -277,37 +306,40 @@ export default function OverviewPage() {
         </Card>
       </div>
 
-      {/* Summary & Recent flags */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardTitle>This Week Summary</CardTitle>
+          <CardTitle>{t("overview.summaryTitle")}</CardTitle>
           <CardContent className="mt-3 space-y-2 text-sm text-muted">
             <p>
-              Progress delta of <strong className="text-foreground">{latest.progressDelta}%</strong> is
-              within the expected range for this construction phase.
+              {summaryProgressBefore}
+              <strong className="text-foreground">{summaryProgressValue}</strong>
+              {summaryProgressAfter}
             </p>
             <p>
-              Activity index at <strong className="text-foreground">{latest.activityIndex.toFixed(0)}</strong> indicates
-              normal on-site activity levels.
+              {summaryActivityBefore}
+              <strong className="text-foreground">{summaryActivityValue}</strong>
+              {summaryActivityAfter}
             </p>
             <p>
-              {latest.activeHours}h of active work logged across {currentProject.cameraCount} camera
-              zones in the last 7 days.
+              {t("overview.summaryActiveHours", {
+                hours: latest.activeHours,
+                count: currentProject.cameraCount,
+              })}
             </p>
             <p>
-              Delay risk assessed as{" "}
+              {t("overview.summaryDelayRisk")}{" "}
               <Badge variant={riskVariant} className="ml-1">
-                {latest.riskLevel}
+                {localizedRiskLevel}
               </Badge>
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardTitle>Recent Flags</CardTitle>
+          <CardTitle>{t("overview.recentFlagsTitle")}</CardTitle>
           <CardContent className="mt-3">
             {alerts.length === 0 ? (
-              <p className="text-sm text-muted">No recent flags for this project.</p>
+              <p className="text-sm text-muted">{t("overview.noRecentFlags")}</p>
             ) : (
               <div className="space-y-3">
                 {alerts.slice(0, 4).map((alert) => (

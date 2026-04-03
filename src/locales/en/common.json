@@ -1,0 +1,69 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "view": "View",
+    "noData": "No data",
+    "none": "None",
+    "andMore": "and {{count}} more"
+  },
+  "topNav": {
+    "toggleSidebar": "Toggle sidebar",
+    "selectProject": "Select project",
+    "switchLanguage": "Switch language"
+  },
+  "sidebar": {
+    "brand": "SitePulse",
+    "mainNavigation": "Main navigation",
+    "closeSidebar": "Close sidebar",
+    "overview": "Overview",
+    "progress": "Progress",
+    "plan": "Plan",
+    "alerts": "Alerts",
+    "reports": "Reports",
+    "settings": "Settings"
+  },
+  "progressLayout": {
+    "title": "Progress",
+    "charts": "Charts",
+    "timeline": "Timeline",
+    "compare": "Compare"
+  },
+  "overview": {
+    "noMetrics": "No metrics data available yet. Run the analysis engine first.",
+    "cameraCoverage": "{{count}} cameras - {{coverage}}% coverage",
+    "lastSnapshot": "Last snapshot: {{date}}",
+    "scheduleDelaysDetected": "{{count}} schedule {{label}} detected",
+    "delaySingular": "delay",
+    "delayPlural": "delays",
+    "kpiWeeklyProgress": "Weekly Progress",
+    "kpiActivityIndex": "Activity Index",
+    "kpiActiveHours": "Active Hours (7d)",
+    "kpiDelayRisk": "Delay Risk",
+    "trendPrev": "+0.3% vs prev",
+    "trendAboveAvg": "Above avg",
+    "trendOnTrack": "On track",
+    "trendNoConcerns": "No concerns",
+    "trendMonitorClosely": "Monitor closely",
+    "trendActionNeeded": "Action needed",
+    "planStatus": "Plan Status",
+    "planDelayed": "{{count}} delayed",
+    "planOnSchedule": "On schedule",
+    "noPlan": "No plan",
+    "uploadPlan": "Upload plan",
+    "riskLow": "Low",
+    "riskMedium": "Medium",
+    "riskHigh": "High",
+    "progressDeltaChart": "Progress Delta (12 weeks)",
+    "activityIndexChart": "Activity Index (12 weeks)",
+    "tooltipProgressDelta": "Progress Delta",
+    "tooltipActivityIndex": "Activity Index",
+    "tooltipWeekOf": "Week of {{label}}",
+    "summaryTitle": "This Week Summary",
+    "summaryProgress": "Progress delta of {{value}}% is within the expected range for this construction phase.",
+    "summaryActivity": "Activity index at {{value}} indicates normal on-site activity levels.",
+    "summaryActiveHours": "{{hours}}h of active work logged across {{count}} camera zones in the last 7 days.",
+    "summaryDelayRisk": "Delay risk assessed as",
+    "recentFlagsTitle": "Recent Flags",
+    "noRecentFlags": "No recent flags for this project."
+  }
+}

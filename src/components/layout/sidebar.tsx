@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/language-context";
 import {
   LayoutDashboard,
   TrendingUp,
@@ -13,15 +14,6 @@ import {
   X,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/progress", label: "Progress", icon: TrendingUp },
-  { href: "/dashboard/plan", label: "Plan", icon: ClipboardList },
-  { href: "/dashboard/alerts", label: "Alerts", icon: Bell },
-  { href: "/dashboard/reports", label: "Reports", icon: FileText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-];
-
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -29,6 +21,16 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { href: "/dashboard", label: t("sidebar.overview"), icon: LayoutDashboard },
+    { href: "/dashboard/progress", label: t("sidebar.progress"), icon: TrendingUp },
+    { href: "/dashboard/plan", label: t("sidebar.plan"), icon: ClipboardList },
+    { href: "/dashboard/alerts", label: t("sidebar.alerts"), icon: Bell },
+    { href: "/dashboard/reports", label: t("sidebar.reports"), icon: FileText },
+    { href: "/dashboard/settings", label: t("sidebar.settings"), icon: Settings },
+  ];
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -36,7 +38,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   };
 
   const nav = (
-    <nav className="flex flex-col gap-1 px-3 py-4" aria-label="Main navigation">
+    <nav className="flex flex-col gap-1 px-3 py-4" aria-label={t("sidebar.mainNavigation")}>
       {navItems.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
@@ -69,11 +71,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <div className="fixed inset-0 bg-black/40" onClick={onClose} aria-hidden />
           <aside className="fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-xl">
             <div className="flex h-14 items-center justify-between border-b px-4">
-              <span className="text-base font-semibold">SitePulse</span>
+              <span className="text-base font-semibold">{t("sidebar.brand")}</span>
               <button
                 onClick={onClose}
                 className="rounded-md p-1.5 text-muted hover:text-foreground transition-colors cursor-pointer"
-                aria-label="Close sidebar"
+                aria-label={t("sidebar.closeSidebar")}
               >
                 <X className="h-5 w-5" />
               </button>

@@ -147,6 +147,8 @@ export async function fetchHeatmap(
 
 // ── Snapshots ───────────────────────────────────────────────────────────────
 
+// Transitional fallback for older backends that still expose snapshot dates
+// but do not yet serve the bulk /snapshots metadata endpoint.
 function buildLegacySnapshotMetadata(projectId: string, dates: string[]): SnapshotMetadata[] {
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
   return dates

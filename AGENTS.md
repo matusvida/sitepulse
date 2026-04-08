@@ -26,7 +26,7 @@ Next.js 16 (App Router) frontend for a construction site monitoring platform. Di
 - The backend returns **camelCase JSON** — TypeScript interfaces match the API response directly, no transformation needed.
 - UI primitives (`Card`, `Badge`, `Button`, `Select`, `Input`, `Modal`, `Toggle`, `Tabs`) are in `src/components/ui/`. Use these instead of creating new ones.
 - `cn()` from `src/lib/utils.ts` is the class merging utility (simple `filter(Boolean).join(" ")`, not clsx).
-- Image URLs are constructed via `snapshotUrl(projectId, date)` from `api.ts` — these proxy through the backend which streams JPEG bytes from MinIO.
+- Image URLs come from snapshot metadata returned by `fetchSnapshots()` in `src/lib/api.ts`. The frontend renders those URLs directly and stays storage-provider-agnostic; do not add UI branching for MinIO vs GCS.
 
 ## File Layout
 

@@ -353,7 +353,10 @@ export default function ProgressComparePage() {
       }
       retryADateRef.current = null;
       retryAUrlRef.current = null;
-      setImgAErrorDate(null);
+      const clearErrorTimer = window.setTimeout(() => {
+        setImgAErrorDate(null);
+      }, 0);
+      return () => window.clearTimeout(clearErrorTimer);
     }
   }, [activeSnapshotA]);
 
@@ -370,7 +373,10 @@ export default function ProgressComparePage() {
       }
       retryBDateRef.current = null;
       retryBUrlRef.current = null;
-      setImgBErrorDate(null);
+      const clearErrorTimer = window.setTimeout(() => {
+        setImgBErrorDate(null);
+      }, 0);
+      return () => window.clearTimeout(clearErrorTimer);
     }
   }, [activeSnapshotB]);
 

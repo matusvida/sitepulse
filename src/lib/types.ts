@@ -40,6 +40,12 @@ export type AlertSeverity = Alert["severity"];
 export type AlertStatus = Alert["status"];
 
 export type Timeframe = "4w" | "12w" | "26w";
+export interface SnapshotMetadata {
+  date: string;
+  url: string;
+  expiresAt: string;
+  mediaType: string;
+}
 
 // ── Plan ────────────────────────────────────────────────────────────────────
 

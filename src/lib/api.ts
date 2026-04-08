@@ -1,4 +1,4 @@
-import type { Project, WeeklyMetrics, DailyMetrics, Alert, PlanData, PlanMilestone, ProgressReport } from "./types";
+import type { Project, WeeklyMetrics, DailyMetrics, Alert, PlanData, PlanMilestone, ProgressReport, SnapshotMetadata } from "./types";
 import {
   projects as mockProjects,
   getWeeklyMetrics as mockWeekly,
@@ -147,9 +147,36 @@ export async function fetchHeatmap(
 
 // ── Snapshots ───────────────────────────────────────────────────────────────
 
+function buildLegacySnapshotMetadata(projectId: string, dates: string[]): SnapshotMetadata[] {
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  return dates
+    .slice()
+    .sort()
+    .map((date) => ({
+      date,
+      url: snapshotUrl(projectId, date),
+      expiresAt,
+      mediaType: "image/jpeg",
+    }));
+}
+
+export async function fetchSnapshots(projectId: string): Promise<SnapshotMetadata[]> {
+  try {
+    return await get<SnapshotMetadata[]>(`/api/projects/${projectId}/snapshots`);
+  } catch {
+    try {
+      const dates = await get<string[]>(`/api/projects/${projectId}/snapshot/dates`);
+      return buildLegacySnapshotMetadata(projectId, dates);
+    } catch {
+      return [];
+    }
+  }
+}
+
 export async function fetchSnapshotDates(projectId: string): Promise<string[]> {
   try {
-    return await get<string[]>(`/api/projects/${projectId}/snapshot/dates`);
+    const snapshots = await fetchSnapshots(projectId);
+    return snapshots.map((snapshot) => snapshot.date);
   } catch {
     return [];
   }

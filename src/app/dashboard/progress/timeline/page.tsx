@@ -2,12 +2,13 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useProject } from "@/lib/project-context";
-import { fetchSnapshotDates, snapshotUrl } from "@/lib/api";
+import { fetchSnapshots } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useImagePreloader } from "@/lib/use-image-preloader";
 import { useTimelinePlayback } from "@/lib/use-timeline-playback";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { ImageOff, ChevronLeft, ChevronRight, Play, Pause, Loader2 } from "lucide-react";
+import type { SnapshotMetadata } from "@/lib/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -54,6 +55,10 @@ function groupIntoWeeks(sortedDates: string[]): Week[] {
 function formatShortDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function sortSnapshots(snapshots: SnapshotMetadata[]): SnapshotMetadata[] {
+  return snapshots.slice().sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // ── WeekPicker ───────────────────────────────────────────────────────────────
@@ -294,32 +299,66 @@ function SnapshotViewer({
 export default function TimelinePage() {
   const { currentProject } = useProject();
 
-  const { data: dates, loading } = useApi(
-    () => fetchSnapshotDates(currentProject.id),
+  const { data: snapshots, loading, refetch: refetchSnapshots } = useApi(
+    () => fetchSnapshots(currentProject.id),
     [currentProject.id],
   );
 
+  const sortedSnapshots = useMemo(
+    () => sortSnapshots(snapshots ?? []),
+    [snapshots],
+  );
+
   const sortedDates = useMemo(
-    () => (dates ?? []).slice().sort(),
-    [dates],
+    () => sortedSnapshots.map((snapshot) => snapshot.date),
+    [sortedSnapshots],
   );
 
   const weeks = useMemo(() => groupIntoWeeks(sortedDates), [sortedDates]);
 
+  const [activeDate, setActiveDate] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
+  const [isPlayMode, setIsPlayMode] = useState(false);
+  const retryDateRef = useRef<string | null>(null);
+  const retryUrlRef = useRef<string | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (sortedSnapshots.length === 0) return;
+    setActiveDate((current) => {
+      if (current && sortedSnapshots.some((snapshot) => snapshot.date === current)) {
+        return current;
+      }
+      return sortedSnapshots[sortedSnapshots.length - 1].date;
+    });
+  }, [sortedSnapshots]);
+
+  useEffect(() => {
+    setImgError(false);
+    retryDateRef.current = null;
+    retryUrlRef.current = null;
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+  }, [activeDate]);
+
   // Build the full URL list for the preloader (memoized so the array
   // reference is stable and doesn't trigger unnecessary re-renders).
   const allUrls = useMemo(
-    () => sortedDates.map((d) => snapshotUrl(currentProject.id, d)),
-    [sortedDates, currentProject.id],
+    () => sortedSnapshots.map((snapshot) => snapshot.url),
+    [sortedSnapshots],
   );
 
-  const [dateIndex, setDateIndex] = useState<number | null>(null);
-  const [imgError, setImgError] = useState(false);
-  const [isPlayMode, setIsPlayMode] = useState(false);
+  const activeDateIdx = useMemo(() => {
+    if (sortedSnapshots.length === 0) return 0;
+    if (!activeDate) return sortedSnapshots.length - 1;
+    const found = sortedSnapshots.findIndex((snapshot) => snapshot.date === activeDate);
+    return found >= 0 ? found : sortedSnapshots.length - 1;
+  }, [activeDate, sortedSnapshots]);
 
-  const activeDateIdx = dateIndex ?? (sortedDates.length > 0 ? sortedDates.length - 1 : 0);
-  const activeDate = sortedDates[activeDateIdx] ?? "";
-  const activeUrl = allUrls[activeDateIdx] ?? "";
+  const activeSnapshot = sortedSnapshots[activeDateIdx];
+  const activeUrl = activeSnapshot?.url ?? "";
 
   // ── Image preloader: manages a single cache of decoded images ────────────
   // The `isPlayMode` flag makes it preload more aggressively forward (8 ahead
@@ -332,9 +371,9 @@ export default function TimelinePage() {
 
   // ── Playback controller: only advances when next image is decoded ───────
   const handleAdvance = useCallback((nextIndex: number) => {
-    setDateIndex(nextIndex);
+    setActiveDate(sortedDates[nextIndex] ?? null);
     setImgError(false);
-  }, []);
+  }, [sortedDates]);
 
   const canAdvance = useCallback(
     (nextIndex: number) => {
@@ -365,36 +404,90 @@ export default function TimelinePage() {
   // ── Navigation handlers ─────────────────────────────────────────────────
   const handleSlider = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setDateIndex(Number(e.target.value));
+      const nextIndex = Number(e.target.value);
+      setActiveDate(sortedDates[nextIndex] ?? null);
       setImgError(false);
       stopPlay();
     },
-    [stopPlay],
+    [sortedDates, stopPlay],
   );
 
   const handleDateSelect = useCallback(
     (globalIndex: number) => {
-      setDateIndex(globalIndex);
+      setActiveDate(sortedDates[globalIndex] ?? null);
       setImgError(false);
       stopPlay();
     },
-    [stopPlay],
+    [sortedDates, stopPlay],
   );
 
   // For arrow navigation: if the image is already decoded, navigate
   // instantly. If not, start loading it and navigate anyway (the
   // SnapshotViewer will hold the old image until the new one loads).
   const handlePrev = useCallback(() => {
-    setDateIndex((prev) => Math.max(0, (prev ?? sortedDates.length - 1) - 1));
+    const nextIndex = Math.max(0, activeDateIdx - 1);
+    setActiveDate(sortedDates[nextIndex] ?? null);
     setImgError(false);
-  }, [sortedDates.length]);
+    stopPlay();
+  }, [activeDateIdx, sortedDates, stopPlay]);
 
   const handleNext = useCallback(() => {
-    setDateIndex((prev) =>
-      Math.min(sortedDates.length - 1, (prev ?? sortedDates.length - 1) + 1),
-    );
+    const nextIndex = Math.min(sortedDates.length - 1, activeDateIdx + 1);
+    setActiveDate(sortedDates[nextIndex] ?? null);
     setImgError(false);
-  }, [sortedDates.length]);
+    stopPlay();
+  }, [activeDateIdx, sortedDates, stopPlay]);
+
+  const handleImageError = useCallback(() => {
+    if (!activeSnapshot) {
+      setImgError(true);
+      return;
+    }
+
+    if (retryDateRef.current !== activeSnapshot.date) {
+      retryDateRef.current = activeSnapshot.date;
+      retryUrlRef.current = activeSnapshot.url;
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+      void refetchSnapshots();
+      retryTimerRef.current = setTimeout(() => {
+        if (
+          retryDateRef.current === activeSnapshot.date &&
+          retryUrlRef.current === activeSnapshot.url
+        ) {
+          setImgError(true);
+          retryDateRef.current = null;
+          retryUrlRef.current = null;
+        }
+      }, 1500);
+      return;
+    }
+
+    setImgError(true);
+  }, [activeSnapshot, refetchSnapshots]);
+
+  useEffect(() => {
+    if (!activeSnapshot) return;
+    if (retryDateRef.current !== activeSnapshot.date) return;
+    if (retryUrlRef.current && retryUrlRef.current !== activeSnapshot.url) {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      retryDateRef.current = null;
+      retryUrlRef.current = null;
+      setImgError(false);
+    }
+  }, [activeSnapshot]);
+
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+    };
+  }, []);
 
   // Keyboard navigation
   useEffect(() => {
@@ -500,7 +593,7 @@ export default function TimelinePage() {
                   currentDate={activeDate}
                   isReady={isReady}
                   waitForImage={waitForImage}
-                  onError={() => setImgError(true)}
+                  onError={handleImageError}
                 />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-2 text-muted">

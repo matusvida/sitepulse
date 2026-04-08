@@ -2,11 +2,12 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useProject } from "@/lib/project-context";
-import { fetchSnapshotDates, snapshotUrl, fetchWeeklyMetrics } from "@/lib/api";
+import { fetchSnapshots, fetchWeeklyMetrics } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ImageOff } from "lucide-react";
+import type { SnapshotMetadata } from "@/lib/types";
 
 interface Week {
   label: string;
@@ -51,6 +52,10 @@ function groupIntoWeeks(sortedDates: string[]): Week[] {
 function formatShortDate(iso: string): string {
   const d = new Date(iso + "T00:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function sortSnapshots(snapshots: SnapshotMetadata[]): SnapshotMetadata[] {
+  return snapshots.slice().sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function WeekPicker({
@@ -147,8 +152,8 @@ function WeekPicker({
 export default function ProgressComparePage() {
   const { currentProject } = useProject();
 
-  const { data: dates, loading: loadingDates } = useApi(
-    () => fetchSnapshotDates(currentProject.id),
+  const { data: snapshots, loading: loadingDates, refetch: refetchSnapshots } = useApi(
+    () => fetchSnapshots(currentProject.id),
     [currentProject.id],
   );
 
@@ -157,37 +162,77 @@ export default function ProgressComparePage() {
     [currentProject.id],
   );
 
+  const sortedSnapshots = useMemo(
+    () => sortSnapshots(snapshots ?? []),
+    [snapshots],
+  );
+
   const sortedDates = useMemo(
-    () => (dates ?? []).slice().sort(),
-    [dates],
+    () => sortedSnapshots.map((snapshot) => snapshot.date),
+    [sortedSnapshots],
   );
 
   const weeks = useMemo(() => groupIntoWeeks(sortedDates), [sortedDates]);
 
-  const [idxA, setIdxA] = useState<number | null>(null);
-  const [idxB, setIdxB] = useState<number | null>(null);
+  const [selectedDateA, setSelectedDateA] = useState<string | null>(null);
+  const [selectedDateB, setSelectedDateB] = useState<string | null>(null);
   const [sliderPos, setSliderPos] = useState(50);
-  const [imgAError, setImgAError] = useState(false);
-  const [imgBError, setImgBError] = useState(false);
+  const [imgAErrorDate, setImgAErrorDate] = useState<string | null>(null);
+  const [imgBErrorDate, setImgBErrorDate] = useState<string | null>(null);
+  const retryADateRef = useRef<string | null>(null);
+  const retryAUrlRef = useRef<string | null>(null);
+  const retryATimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryBDateRef = useRef<string | null>(null);
+  const retryBUrlRef = useRef<string | null>(null);
+  const retryBTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resolvedDateA = useMemo(() => {
+    if (sortedSnapshots.length === 0) return "";
+    const fallback = sortedSnapshots[Math.max(sortedSnapshots.length - 2, 0)]?.date ?? "";
+    if (!selectedDateA) return fallback;
+    return sortedSnapshots.some((snapshot) => snapshot.date === selectedDateA)
+      ? selectedDateA
+      : fallback;
+  }, [selectedDateA, sortedSnapshots]);
 
-  const activeIdxA = idxA ?? (sortedDates.length > 1 ? sortedDates.length - 2 : 0);
-  const activeIdxB = idxB ?? (sortedDates.length > 0 ? sortedDates.length - 1 : 0);
+  const resolvedDateB = useMemo(() => {
+    if (sortedSnapshots.length === 0) return "";
+    const fallback = sortedSnapshots[sortedSnapshots.length - 1]?.date ?? "";
+    if (!selectedDateB) return fallback;
+    return sortedSnapshots.some((snapshot) => snapshot.date === selectedDateB)
+      ? selectedDateB
+      : fallback;
+  }, [selectedDateB, sortedSnapshots]);
 
-  const effectiveA = sortedDates[activeIdxA] ?? "";
-  const effectiveB = sortedDates[activeIdxB] ?? "";
+  const activeIdxA = useMemo(() => {
+    if (!resolvedDateA) return 0;
+    const found = sortedSnapshots.findIndex((snapshot) => snapshot.date === resolvedDateA);
+    return found >= 0 ? found : Math.max(sortedSnapshots.length - 2, 0);
+  }, [resolvedDateA, sortedSnapshots]);
 
-  const imgSrcA = effectiveA ? snapshotUrl(currentProject.id, effectiveA) : "";
-  const imgSrcB = effectiveB ? snapshotUrl(currentProject.id, effectiveB) : "";
+  const activeIdxB = useMemo(() => {
+    if (!resolvedDateB) return 0;
+    const found = sortedSnapshots.findIndex((snapshot) => snapshot.date === resolvedDateB);
+    return found >= 0 ? found : sortedSnapshots.length - 1;
+  }, [resolvedDateB, sortedSnapshots]);
+
+  const activeSnapshotA = sortedSnapshots[activeIdxA];
+  const activeSnapshotB = sortedSnapshots[activeIdxB];
+
+  const effectiveA = resolvedDateA;
+  const effectiveB = resolvedDateB;
+
+  const imgSrcA = activeSnapshotA?.url ?? "";
+  const imgSrcB = activeSnapshotB?.url ?? "";
 
   const handleSelectA = useCallback((globalIndex: number) => {
-    setIdxA(globalIndex);
-    setImgAError(false);
-  }, []);
+    setSelectedDateA(sortedDates[globalIndex] ?? null);
+    setImgAErrorDate(null);
+  }, [sortedDates]);
 
   const handleSelectB = useCallback((globalIndex: number) => {
-    setIdxB(globalIndex);
-    setImgBError(false);
-  }, []);
+    setSelectedDateB(sortedDates[globalIndex] ?? null);
+    setImgBErrorDate(null);
+  }, [sortedDates]);
 
   const handleSlider = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSliderPos(Number(e.target.value));
@@ -227,15 +272,118 @@ export default function ProgressComparePage() {
 
   // Prefetch selected images
   useEffect(() => {
-    if (effectiveA) {
+    if (activeSnapshotA?.url) {
       const img = new Image();
-      img.src = snapshotUrl(currentProject.id, effectiveA);
+      img.src = activeSnapshotA.url;
     }
-    if (effectiveB) {
+    if (activeSnapshotB?.url) {
       const img = new Image();
-      img.src = snapshotUrl(currentProject.id, effectiveB);
+      img.src = activeSnapshotB.url;
     }
-  }, [effectiveA, effectiveB, currentProject.id]);
+  }, [activeSnapshotA?.url, activeSnapshotB?.url]);
+
+  const handleImageErrorA = useCallback(() => {
+    if (!activeSnapshotA) {
+      setImgAErrorDate(resolvedDateA || null);
+      return;
+    }
+
+    if (retryADateRef.current !== activeSnapshotA.date) {
+      retryADateRef.current = activeSnapshotA.date;
+      retryAUrlRef.current = activeSnapshotA.url;
+      if (retryATimerRef.current) {
+        clearTimeout(retryATimerRef.current);
+      }
+      void refetchSnapshots();
+      retryATimerRef.current = setTimeout(() => {
+        if (
+          retryADateRef.current === activeSnapshotA.date &&
+          retryAUrlRef.current === activeSnapshotA.url
+        ) {
+          setImgAErrorDate(activeSnapshotA.date);
+          retryADateRef.current = null;
+          retryAUrlRef.current = null;
+        }
+      }, 1500);
+      return;
+    }
+
+    setImgAErrorDate(activeSnapshotA.date);
+  }, [activeSnapshotA, refetchSnapshots, resolvedDateA]);
+
+  const handleImageErrorB = useCallback(() => {
+    if (!activeSnapshotB) {
+      setImgBErrorDate(resolvedDateB || null);
+      return;
+    }
+
+    if (retryBDateRef.current !== activeSnapshotB.date) {
+      retryBDateRef.current = activeSnapshotB.date;
+      retryBUrlRef.current = activeSnapshotB.url;
+      if (retryBTimerRef.current) {
+        clearTimeout(retryBTimerRef.current);
+      }
+      void refetchSnapshots();
+      retryBTimerRef.current = setTimeout(() => {
+        if (
+          retryBDateRef.current === activeSnapshotB.date &&
+          retryBUrlRef.current === activeSnapshotB.url
+        ) {
+          setImgBErrorDate(activeSnapshotB.date);
+          retryBDateRef.current = null;
+          retryBUrlRef.current = null;
+        }
+      }, 1500);
+      return;
+    }
+
+    setImgBErrorDate(activeSnapshotB.date);
+  }, [activeSnapshotB, refetchSnapshots, resolvedDateB]);
+
+  useEffect(() => {
+    if (
+      activeSnapshotA &&
+      retryADateRef.current === activeSnapshotA.date &&
+      retryAUrlRef.current &&
+      retryAUrlRef.current !== activeSnapshotA.url
+    ) {
+      if (retryATimerRef.current) {
+        clearTimeout(retryATimerRef.current);
+        retryATimerRef.current = null;
+      }
+      retryADateRef.current = null;
+      retryAUrlRef.current = null;
+      setImgAErrorDate(null);
+    }
+  }, [activeSnapshotA]);
+
+  useEffect(() => {
+    if (
+      activeSnapshotB &&
+      retryBDateRef.current === activeSnapshotB.date &&
+      retryBUrlRef.current &&
+      retryBUrlRef.current !== activeSnapshotB.url
+    ) {
+      if (retryBTimerRef.current) {
+        clearTimeout(retryBTimerRef.current);
+        retryBTimerRef.current = null;
+      }
+      retryBDateRef.current = null;
+      retryBUrlRef.current = null;
+      setImgBErrorDate(null);
+    }
+  }, [activeSnapshotB]);
+
+  useEffect(() => {
+    return () => {
+      if (retryATimerRef.current) {
+        clearTimeout(retryATimerRef.current);
+      }
+      if (retryBTimerRef.current) {
+        clearTimeout(retryBTimerRef.current);
+      }
+    };
+  }, []);
 
   const metricsForDate = useCallback(
     (d: string) => {
@@ -336,13 +484,13 @@ export default function ProgressComparePage() {
               >
                 {/* Snapshot B (full background) */}
                 <div className="absolute inset-0">
-                  {imgSrcB && !imgBError ? (
+                  {imgSrcB && imgBErrorDate !== effectiveB ? (
                     <img
                       src={imgSrcB}
                       alt={`Snapshot B — ${effectiveB}`}
                       className="h-full w-full object-cover pointer-events-none"
                       draggable={false}
-                      onError={() => setImgBError(true)}
+                      onError={handleImageErrorB}
                     />
                   ) : (
                     placeholder(`Snapshot B — ${effectiveB}`)
@@ -354,13 +502,13 @@ export default function ProgressComparePage() {
                   className="absolute inset-0"
                   style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)` }}
                 >
-                  {imgSrcA && !imgAError ? (
+                  {imgSrcA && imgAErrorDate !== effectiveA ? (
                     <img
                       src={imgSrcA}
                       alt={`Snapshot A — ${effectiveA}`}
                       className="h-full w-full object-cover pointer-events-none"
                       draggable={false}
-                      onError={() => setImgAError(true)}
+                      onError={handleImageErrorA}
                     />
                   ) : (
                     placeholder(`Snapshot A — ${effectiveA}`)

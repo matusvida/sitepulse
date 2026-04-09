@@ -18,14 +18,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const { t } = useLanguage();
   const { currentProject, setProjectId, allProjects } = useProject();
 
-  const navItems = [
+  const primaryNavItems = [
     { href: "/dashboard", label: t("sidebar.overview"), icon: LayoutDashboard },
     { href: "/dashboard/progress", label: t("sidebar.progress"), icon: TrendingUp },
     { href: "/dashboard/plan", label: t("sidebar.plan"), icon: ClipboardList },
     { href: "/dashboard/alerts", label: t("sidebar.alerts"), icon: Bell },
     { href: "/dashboard/reports", label: t("sidebar.reports"), icon: FileText },
-    { href: "/dashboard/settings", label: t("sidebar.settings"), icon: Settings },
   ];
+
+  const settingsItem = { href: "/dashboard/settings", label: t("sidebar.settings"), icon: Settings };
 
   const projectOptions = allProjects.map((project) => ({
     value: project.id,
@@ -37,33 +38,43 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
+  const renderNavLink = ({
+    href,
+    label,
+    icon: Icon,
+  }: {
+    href: string;
+    label: string;
+    icon: typeof LayoutDashboard;
+  }) => (
+    <Link
+      key={href}
+      href={href}
+      onClick={onClose}
+      className={cn(
+        "group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-200",
+        isActive(href)
+          ? "border border-primary/15 bg-primary/10 text-foreground shadow-[0_18px_40px_-30px_rgba(29,95,209,0.22)]"
+          : "text-muted hover:bg-accent hover:text-foreground",
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
+          isActive(href)
+            ? "bg-white text-primary shadow-[0_10px_24px_-18px_rgba(29,95,209,0.45)]"
+            : "bg-white/70 text-muted group-hover:text-foreground",
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
+      <span>{label}</span>
+    </Link>
+  );
+
   const nav = (
     <nav className="space-y-1.5" aria-label={t("sidebar.mainNavigation")}>
-      {navItems.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          onClick={onClose}
-          className={cn(
-            "group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-200",
-            isActive(href)
-              ? "border border-primary/15 bg-primary/10 text-foreground shadow-[0_18px_40px_-30px_rgba(29,95,209,0.22)]"
-              : "text-muted hover:bg-accent hover:text-foreground"
-          )}
-        >
-          <span
-            className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
-              isActive(href)
-                ? "bg-white text-primary shadow-[0_10px_24px_-18px_rgba(29,95,209,0.45)]"
-                : "bg-white/70 text-muted group-hover:text-foreground"
-            )}
-          >
-            <Icon className="h-4 w-4" />
-          </span>
-          <span>{label}</span>
-        </Link>
-      ))}
+      {primaryNavItems.map(renderNavLink)}
     </nav>
   );
 
@@ -97,10 +108,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <>
       <aside className="hidden lg:fixed lg:inset-y-16 lg:left-0 lg:z-30 lg:block lg:w-[290px] lg:border-r lg:border-white/70 lg:bg-white/58 lg:backdrop-blur-sm">
-        <div className="h-full overflow-y-auto px-4 py-6">
-          <div className="space-y-5">
-            {projectPanel}
-            {nav}
+        <div className="flex h-full flex-col px-4 py-6">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="space-y-5">
+              {projectPanel}
+              {nav}
+            </div>
+          </div>
+          <div className="mt-6 border-t border-white/70 pt-5">
+            {renderNavLink(settingsItem)}
           </div>
         </div>
       </aside>
@@ -131,6 +147,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="space-y-5 overflow-y-auto pb-4">
               {projectPanel}
               {nav}
+              <div className="border-t border-white/70 pt-4">
+                {renderNavLink(settingsItem)}
+              </div>
             </div>
           </aside>
         </div>

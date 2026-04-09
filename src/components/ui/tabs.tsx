@@ -168,7 +168,7 @@ export function TabsTrigger({ value, children, className }: TabsTriggerProps) {
       className={cn(
         "rounded-xl px-3.5 py-2 text-sm font-semibold transition-[background-color,color,box-shadow] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
         isActive
-          ? "bg-primary text-white shadow-[0_14px_28px_-20px_rgba(29,95,209,0.95)]"
+          ? "border border-primary/15 bg-primary/10 text-primary shadow-[0_14px_28px_-24px_rgba(29,95,209,0.28)]"
           : "text-muted hover:bg-accent hover:text-foreground",
         className,
       )}

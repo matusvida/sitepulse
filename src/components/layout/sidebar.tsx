@@ -6,16 +6,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { useProject } from "@/lib/project-context";
 import { Select } from "@/components/ui/select";
-import {
-  Bell,
-  ClipboardList,
-  FileText,
-  LayoutDashboard,
-  MapPin,
-  Settings,
-  TrendingUp,
-  X,
-} from "lucide-react";
+import { Bell, ClipboardList, FileText, LayoutDashboard, MapPin, Settings, TrendingUp, X } from "lucide-react";
 
 interface SidebarProps {
   open: boolean;
@@ -56,7 +47,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           className={cn(
             "group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-200",
             isActive(href)
-              ? "bg-slate-950 text-white shadow-[0_18px_40px_-26px_rgba(15,23,42,0.75)]"
+              ? "border border-primary/15 bg-primary/10 text-foreground shadow-[0_18px_40px_-30px_rgba(29,95,209,0.22)]"
               : "text-muted hover:bg-accent hover:text-foreground"
           )}
         >
@@ -64,7 +55,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl transition-colors",
               isActive(href)
-                ? "bg-white/12 text-white"
+                ? "bg-white text-primary shadow-[0_10px_24px_-18px_rgba(29,95,209,0.45)]"
                 : "bg-white/70 text-muted group-hover:text-foreground"
             )}
           >
@@ -103,20 +94,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     </div>
   );
 
-  const workspaceNote = (
-    <div className="rounded-[26px] bg-slate-950 p-4 text-white shadow-[0_22px_48px_-28px_rgba(15,23,42,0.85)]">
-      <p className="text-sm font-semibold">{t("sidebar.workspaceNoteTitle")}</p>
-      <p className="mt-2 text-sm leading-6 text-white/70">{t("sidebar.workspaceNoteBody")}</p>
-    </div>
-  );
-
   return (
     <>
-      <aside className="hidden w-[290px] shrink-0 border-r border-white/70 bg-white/58 px-4 py-6 backdrop-blur-sm lg:block">
-        <div className="space-y-5">
-          {projectPanel}
-          {nav}
-          {workspaceNote}
+      <aside className="hidden lg:fixed lg:inset-y-16 lg:left-0 lg:z-30 lg:block lg:w-[290px] lg:border-r lg:border-white/70 lg:bg-white/58 lg:backdrop-blur-sm">
+        <div className="h-full overflow-y-auto px-4 py-6">
+          <div className="space-y-5">
+            {projectPanel}
+            {nav}
+          </div>
         </div>
       </aside>
 
@@ -146,7 +131,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <div className="space-y-5 overflow-y-auto pb-4">
               {projectPanel}
               {nav}
-              {workspaceNote}
             </div>
           </aside>
         </div>

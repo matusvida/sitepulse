@@ -47,7 +47,11 @@
     "supportBody": "Majte zdravie kamier, reakcie na upozornenia a reportovanie postupu zosúladené pred každým kontrolným cyklom.",
     "helpLink": "Help desk",
     "docsLink": "Produktová dokumentácia",
-    "projectCount": "{{count}} aktívnych projektov"
+    "projectCount": "{{count}} aktívnych projektov",
+    "footerCopyright": "© 2026 SitePulse. Pracovný priestor pre monitoring výstavby.",
+    "footerPrivacy": "Súkromie",
+    "footerTerms": "Podmienky",
+    "footerStatus": "Stav systému"
   },
   "overview": {
     "heroEyebrow": "Operačný pulz",

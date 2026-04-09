@@ -137,35 +137,46 @@ export default function OverviewPage() {
   const activityValue = latest.activityIndex.toFixed(0);
   const activitySummary = t("overview.summaryActivity", { value: activityValue });
   const [activityBefore = "", activityAfter = ""] = activitySummary.split(activityValue);
+  const planCoverageValue = planStats ? `${planStats.completed}/${planStats.total}` : "0/0";
 
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(237,243,251,0.88))]">
-        <CardContent className="grid gap-6 p-0 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="p-6 sm:p-8">
+        <CardContent className="grid gap-0 p-0 lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="p-5 sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
               {t("overview.heroEyebrow")}
             </p>
-            <div className="mt-4">
-              <h1 className="text-3xl font-semibold tracking-tight">{currentProject.name}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-                {t("overview.heroDescription")}
-              </p>
+            <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight sm:text-[1.9rem]">
+                  {currentProject.name}
+                </h1>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+                  {t("overview.heroDescription")}
+                </p>
+              </div>
+              <div className="rounded-[22px] bg-slate-950 px-4 py-3 text-white shadow-[0_20px_42px_-26px_rgba(15,23,42,0.65)]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                  {t("overview.latestObservedWeek")}
+                </p>
+                <p className="mt-1 text-2xl font-semibold tracking-tight">{latest.progressDelta}%</p>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-muted">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 shadow-sm">
+            <div className="mt-5 flex flex-wrap items-center gap-2.5 text-sm text-muted">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
                 <MapPin className="h-4 w-4 text-primary" />
                 {currentProject.location}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 shadow-sm">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
                 <Camera className="h-4 w-4 text-primary" />
                 {t("overview.cameraCoverage", {
                   count: currentProject.cameraCount,
                   coverage: currentProject.coveragePercent,
                 })}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-2 shadow-sm">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
                 <Clock className="h-4 w-4 text-primary" />
                 {t("overview.lastSnapshot", {
                   date: formatDateTime(currentProject.lastSnapshotAt),
@@ -174,33 +185,34 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 border-t border-white/70 bg-white/55 p-6 sm:grid-cols-3 lg:grid-cols-1 lg:border-l lg:border-t-0">
-            <div className="rounded-[24px] border border-white/80 bg-white/85 p-5 shadow-sm">
+          <div className="grid gap-3 border-t border-white/70 bg-white/55 p-5 sm:grid-cols-3 lg:border-l lg:border-t-0">
+            <div className="rounded-[22px] border border-white/80 bg-white/88 p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {t("overview.openScheduleAlerts")}
               </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight">{scheduleAlerts.length}</p>
-              <p className="mt-2 text-sm text-muted">{t("overview.reviewAlertsDescription")}</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight">{scheduleAlerts.length}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">{t("overview.reviewAlertsDescription")}</p>
             </div>
-            <div className="rounded-[24px] border border-white/80 bg-white/85 p-5 shadow-sm">
+            <div className="rounded-[22px] border border-white/80 bg-white/88 p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {t("overview.planCoverage")}
               </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight">
-                {planStats ? `${planStats.completed}/${planStats.total}` : "0"}
-              </p>
-              <p className="mt-2 text-sm text-muted">
+              <p className="mt-2 text-2xl font-semibold tracking-tight">{planCoverageValue}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">
                 {planStats
                   ? t("overview.planCoverageDescription", { count: planStats.delayed })
                   : t("overview.noPlan")}
               </p>
             </div>
-            <div className="rounded-[24px] border border-white/80 bg-slate-950 p-5 text-white shadow-[0_28px_64px_-36px_rgba(15,23,42,0.7)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/60">
-                {t("overview.latestObservedWeek")}
+            <div className="rounded-[22px] border border-white/80 bg-white/88 p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                {t("overview.summaryTitle")}
               </p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight">{latest.progressDelta}%</p>
-              <p className="mt-2 text-sm text-white/70">{t("overview.last12Weeks")}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {progressBefore}
+                <strong className="text-foreground">{progressValue}</strong>
+                {progressAfter}
+              </p>
             </div>
           </div>
         </CardContent>

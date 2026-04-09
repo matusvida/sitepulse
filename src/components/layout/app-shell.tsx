@@ -14,7 +14,7 @@ function DashboardFooter() {
 
   return (
     <footer className="mt-2 border-t border-white/70 pt-5">
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
         <div className="rounded-[24px] border border-white/75 bg-white/78 p-5 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.3)] backdrop-blur-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
             {t("shell.projectStatus")}
@@ -58,21 +58,29 @@ function DashboardFooter() {
             <p className="mt-2 text-sm text-muted uppercase">{locale}</p>
           </div>
         </div>
-
-        <div className="rounded-[24px] border border-white/75 bg-slate-950 p-5 text-white shadow-[0_28px_64px_-36px_rgba(15,23,42,0.7)]">
-          <div className="flex items-center gap-2 text-sm font-medium text-white/90">
-            <LifeBuoy className="h-4 w-4" />
+      </div>
+      <div className="mt-4 flex flex-col gap-3 border-t border-white/70 pt-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>{t("shell.footerCopyright")}</p>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <span className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-1.5 text-white">
+            <LifeBuoy className="h-3.5 w-3.5" />
             {t("shell.support")}
-          </div>
-          <p className="mt-3 text-sm leading-6 text-white/70">{t("shell.supportBody")}</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium">
-            <span className="rounded-full bg-white/10 px-3 py-1.5 text-white/85">
-              {t("shell.helpLink")}
-            </span>
-            <span className="rounded-full bg-white/10 px-3 py-1.5 text-white/85">
-              {t("shell.docsLink")}
-            </span>
-          </div>
+          </span>
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+            {t("shell.helpLink")}
+          </span>
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+            {t("shell.docsLink")}
+          </span>
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+            {t("shell.footerPrivacy")}
+          </span>
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+            {t("shell.footerTerms")}
+          </span>
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+            {t("shell.footerStatus")}
+          </span>
         </div>
       </div>
     </footer>
@@ -88,7 +96,7 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
       <TopNav onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
       <div className="relative flex flex-1 overflow-hidden">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto lg:pl-[290px]">
           <div className="mx-auto flex min-h-full w-full max-w-[1680px] flex-col gap-6 px-4 py-4 lg:px-6 lg:py-6">
             <div className="flex-1">{children}</div>
             <DashboardFooter />

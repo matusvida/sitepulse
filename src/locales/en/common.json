@@ -47,7 +47,11 @@
     "supportBody": "Keep camera health, alert response, and progress reporting aligned before each review cycle.",
     "helpLink": "Help desk",
     "docsLink": "Product docs",
-    "projectCount": "{{count}} active projects"
+    "projectCount": "{{count}} active projects",
+    "footerCopyright": "© 2026 SitePulse. Construction monitoring workspace.",
+    "footerPrivacy": "Privacy",
+    "footerTerms": "Terms",
+    "footerStatus": "System status"
   },
   "overview": {
     "heroEyebrow": "Operations pulse",

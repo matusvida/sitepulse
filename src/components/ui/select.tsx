@@ -297,14 +297,19 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                       className={cn(
                         optionButtonClass,
                         isSelected
-                          ? "bg-primary text-white shadow-[0_16px_34px_-22px_rgba(29,95,209,0.95)]"
+                          ? "border border-primary/15 bg-primary/10 text-foreground shadow-[0_16px_34px_-28px_rgba(29,95,209,0.2)]"
                           : isHighlighted
                             ? "bg-accent text-foreground"
                             : "text-foreground hover:bg-accent",
                       )}
                     >
                       <span className="truncate">{option.label}</span>
-                      <Check className={cn("h-4 w-4 shrink-0", isSelected ? "opacity-100" : "opacity-0")} />
+                      <Check
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          isSelected ? "opacity-100 text-primary" : "opacity-0",
+                        )}
+                      />
                     </button>
                   );
                 })}

@@ -1,163 +1,244 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useProject } from "@/lib/project-context";
 import { fetchWeeklyMetrics } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
-import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { Toggle } from "@/components/ui/toggle";
+import { useLanguage } from "@/lib/language-context";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartWrapper } from "@/components/charts/chart-wrapper";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  AreaChart,
   Area,
+  AreaChart,
+  CartesianGrid,
+  ReferenceLine,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ReferenceLine,
 } from "recharts";
+import { Activity, ArrowUpRight, Gauge, ShieldAlert } from "lucide-react";
 import type { Timeframe } from "@/lib/types";
 
 const timeframeWeeks: Record<Timeframe, number> = { "4w": 4, "12w": 12, "26w": 26 };
 
 export default function ProgressPage() {
   const { currentProject } = useProject();
-
+  const { t } = useLanguage();
   const { data: weekly, loading } = useApi(
     () => fetchWeeklyMetrics(currentProject.id, 26),
     [currentProject.id],
   );
-
   const [timeframe, setTimeframe] = useState<Timeframe>("12w");
-  const [workingHoursOnly, setWorkingHoursOnly] = useState(true);
-  const [weatherNorm, setWeatherNorm] = useState(false);
 
   const chartData = useMemo(() => {
     if (!weekly) return [];
-    const weeks = timeframeWeeks[timeframe];
-    return weekly.slice(-weeks);
+    return weekly.slice(-timeframeWeeks[timeframe]);
   }, [weekly, timeframe]);
 
-  const avg =
-    chartData.length > 0
-      ? chartData.reduce((sum, w) => sum + w.progressDelta, 0) / chartData.length
-      : 0;
+  const summary = useMemo(() => {
+    if (chartData.length === 0) return null;
+
+    const progressValues = chartData.map((entry) => entry.progressDelta);
+    const activeHours = chartData.map((entry) => entry.activeHours);
+    const latest = chartData[chartData.length - 1];
+    const averageDelta = progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length;
+    const bestWeek = Math.max(...progressValues);
+    const averageHours = activeHours.reduce((sum, value) => sum + value, 0) / activeHours.length;
+
+    return {
+      latest,
+      averageDelta,
+      bestWeek,
+      averageHours,
+    };
+  }, [chartData]);
 
   if (loading || !weekly) {
-    return <div className="py-12 text-center text-muted">Loading…</div>;
+    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
   }
+
+  const averageLine = summary ? Math.round(summary.averageDelta * 10) / 10 : 0;
+  const localizedRiskLevel =
+    summary?.latest.riskLevel === "Low"
+      ? t("overview.riskLow")
+      : summary?.latest.riskLevel === "Medium"
+        ? t("overview.riskMedium")
+        : t("overview.riskHigh");
+  const riskTone =
+    summary?.latest.riskLevel === "High"
+      ? "text-red-600"
+      : summary?.latest.riskLevel === "Medium"
+        ? "text-amber-600"
+        : "text-emerald-600";
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-end gap-4">
-        <Tabs defaultValue={timeframe} onValueChange={(v) => setTimeframe(v as Timeframe)}>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("progressPage.title")}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">
+            {t("progressPage.description")}
+          </p>
+        </div>
+        <Tabs defaultValue={timeframe} onValueChange={(value) => setTimeframe(value as Timeframe)}>
           <TabsList>
-            {(["4w", "12w", "26w"] as Timeframe[]).map((tf) => (
-              <TabsTrigger key={tf} value={tf}>
-                {tf}
+            {(["4w", "12w", "26w"] as Timeframe[]).map((value) => (
+              <TabsTrigger key={value} value={value}>
+                {value}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
-        <Toggle
-          label="Working hours"
-          checked={workingHoursOnly}
-          onChange={setWorkingHoursOnly}
-        />
-        <Toggle
-          label="Weather norm."
-          checked={weatherNorm}
-          onChange={setWeatherNorm}
-        />
       </div>
 
-      {/* Main chart */}
-      <Card>
-        <CardTitle>Weekly Progress Delta</CardTitle>
-        <CardContent className="mt-4">
-          <ChartWrapper height={340}>
-            <AreaChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" />
-              <XAxis
-                dataKey="weekStart"
-                tickFormatter={(v) => String(v).slice(5)}
-                tick={{ fontSize: 11 }}
-                stroke="#a1a1aa"
-              />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                stroke="#a1a1aa"
-                tickFormatter={(v) => `${v}%`}
-              />
-              <Tooltip
-                contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }}
-                formatter={(value) => [`${value}%`, "Progress Delta"]}
-                labelFormatter={(label) => `Week of ${label}`}
-              />
-              <ReferenceLine
-                y={Math.round(avg * 10) / 10}
-                stroke="#a1a1aa"
-                strokeDasharray="4 4"
-                label={{ value: `Avg ${avg.toFixed(1)}%`, position: "right", fontSize: 11, fill: "#71717a" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="progressDelta"
-                stroke="#2563eb"
-                fill="#2563eb"
-                fillOpacity={0.08}
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ChartWrapper>
-        </CardContent>
-      </Card>
-
-      {/* Heatmap preview */}
-      <Card>
-        <CardTitle>Change Heatmap</CardTitle>
-        <CardContent className="mt-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {["Previous Week", "Current Week", "Change Overlay"].map((label) => (
-              <div key={label}>
-                <p className="mb-2 text-xs font-medium text-muted">{label}</p>
-                <div className="flex aspect-video items-center justify-center rounded-lg border bg-accent/50 text-xs text-muted">
-                  {label === "Change Overlay" ? (
-                    <div className="text-center">
-                      <div className="mx-auto mb-1 h-8 w-8 rounded-full bg-primary/20" />
-                      <span>Diff visualization</span>
-                    </div>
-                  ) : (
-                    <span>Snapshot placeholder</span>
-                  )}
-                </div>
+      {summary ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+                <ArrowUpRight className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-muted">{t("progressPage.averageWeeklyDelta")}</p>
+                <p className="text-2xl font-semibold tracking-tight">{summary.averageDelta.toFixed(1)}%</p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                <Gauge className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-muted">{t("progressPage.bestObservedWeek")}</p>
+                <p className="text-2xl font-semibold tracking-tight">{summary.bestWeek.toFixed(1)}%</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700">
+                <Activity className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-muted">{t("progressPage.averageActiveHours")}</p>
+                <p className="text-2xl font-semibold tracking-tight">{summary.averageHours.toFixed(0)}h</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-5">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                <ShieldAlert className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-muted">{t("progressPage.currentRiskLevel")}</p>
+                <p className={`text-2xl font-semibold tracking-tight ${riskTone}`}>{localizedRiskLevel}</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      ) : null}
 
-      {/* Explanation */}
-      <Card>
-        <CardTitle>How Progress Is Calculated</CardTitle>
-        <CardContent className="mt-3 space-y-2 text-sm text-muted">
-          <p>
-            SitePulse uses <strong className="text-foreground">structural similarity (SSIM)</strong> and pixel-level
-            change detection between consecutive weekly snapshots to estimate construction progress.
-          </p>
-          <p>
-            Regions of significant change are identified, filtered for weather/lighting variations,
-            and aggregated into a single <strong className="text-foreground">progress delta</strong> metric
-            representing the percentage of visible structural change.
-          </p>
-          <p>
-            When &quot;Weather normalization&quot; is enabled, the algorithm compensates for known
-            weather events using historical correlation data.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("progressPage.weeklyProgressDelta")}</CardTitle>
+            <CardDescription>{t("progressPage.weeklyDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartWrapper height={360}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="progressFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1d5fd1" stopOpacity={0.24} />
+                    <stop offset="95%" stopColor="#1d5fd1" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#d5dfec" />
+                <XAxis
+                  dataKey="weekStart"
+                  tickFormatter={(value) => String(value).slice(5)}
+                  tick={{ fontSize: 11 }}
+                  stroke="#94a3b8"
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  stroke="#94a3b8"
+                  tickFormatter={(value) => `${value}%`}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 16,
+                    border: "1px solid #d5dfec",
+                    boxShadow: "0 18px 42px -30px rgba(15, 23, 42, 0.45)",
+                  }}
+                  formatter={(value) => [`${value}%`, t("progressPage.tooltipProgressDelta")]}
+                  labelFormatter={(label) => t("progressPage.tooltipWeekOf", { label: String(label) })}
+                />
+                <ReferenceLine
+                  y={averageLine}
+                  stroke="#64748b"
+                  strokeDasharray="4 4"
+                  label={{ value: t("progressPage.averageLabel", { value: averageLine.toFixed(1) }), position: "right", fontSize: 11, fill: "#64748b" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="progressDelta"
+                  stroke="#1d5fd1"
+                  fill="url(#progressFill)"
+                  strokeWidth={2.5}
+                />
+              </AreaChart>
+            </ChartWrapper>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("progressPage.currentReadout")}</CardTitle>
+              <CardDescription>{t("progressPage.currentReadoutDescription")}</CardDescription>
+            </CardHeader>
+            {summary ? (
+              <CardContent className="space-y-4">
+                <div className="rounded-[24px] bg-accent/60 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">{t("progressPage.latestDelta")}</p>
+                  <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.latest.progressDelta}%</p>
+                  <p className="mt-1 text-sm text-muted">{t("progressPage.comparedAgainst", { count: timeframeWeeks[timeframe] })}</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                  <div className="rounded-2xl border border-border/70 bg-white/75 p-4">
+                    <p className="text-sm font-medium text-foreground">{t("progressPage.activityIndex")}</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight">{summary.latest.activityIndex.toFixed(0)}</p>
+                    <p className="mt-1 text-sm text-muted">{t("progressPage.activityIndexDescription")}</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/70 bg-white/75 p-4">
+                    <p className="text-sm font-medium text-foreground">{t("progressPage.activeHours")}</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-tight">{summary.latest.activeHours}h</p>
+                    <p className="mt-1 text-sm text-muted">{t("progressPage.activeHoursDescription")}</p>
+                  </div>
+                </div>
+              </CardContent>
+            ) : null}
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("progressPage.howMetricRead")}</CardTitle>
+              <CardDescription>
+                {t("progressPage.howMetricReadDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted">
+              <p>{t("progressPage.metricReadBody1")}</p>
+              <p>{t("progressPage.metricReadBody2")}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
-

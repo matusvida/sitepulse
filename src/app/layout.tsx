@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SitePulse — Construction Progress Intelligence",
+  title: "SitePulse - Construction Progress Intelligence",
   description: "AI-powered construction progress monitoring and activity intelligence platform.",
 };
 

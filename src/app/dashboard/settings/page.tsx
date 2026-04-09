@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useProject } from "@/lib/project-context";
 import { updateProject } from "@/lib/api";
+import { useLanguage } from "@/lib/language-context";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -11,6 +12,7 @@ import { Save, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
   const { currentProject, refresh } = useProject();
+  const { t } = useLanguage();
 
   const [projectName, setProjectName] = useState(currentProject.name);
   const [location, setLocation] = useState(currentProject.location);
@@ -41,115 +43,108 @@ export default function SettingsPage() {
       refresh();
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("settingsPage.failedToSave"));
     } finally {
       setSaving(false);
     }
-  }, [currentProject.id, projectName, location, refresh]);
+  }, [currentProject.id, location, projectName, refresh, t]);
 
-  const intervalOptions = [
-    { value: "15m", label: "Every 15 minutes" },
-    { value: "30m", label: "Every 30 minutes" },
-    { value: "1h", label: "Every hour" },
-    { value: "2h", label: "Every 2 hours" },
-    { value: "4h", label: "Every 4 hours" },
-  ];
+  const intervalOptions = useMemo(
+    () => [
+      { value: "15m", label: t("settingsPage.interval.15m") },
+      { value: "30m", label: t("settingsPage.interval.30m") },
+      { value: "1h", label: t("settingsPage.interval.1h") },
+      { value: "2h", label: t("settingsPage.interval.2h") },
+      { value: "4h", label: t("settingsPage.interval.4h") },
+    ],
+    [t],
+  );
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">Settings</h1>
+      <h1 className="text-xl font-semibold">{t("settingsPage.title")}</h1>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardTitle>Project Settings</CardTitle>
+          <CardTitle>{t("settingsPage.projectSettings")}</CardTitle>
           <CardContent className="mt-4 space-y-4">
             <Input
               id="project-name"
-              label="Project Name"
+              label={t("settingsPage.projectName")}
               value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              onChange={(event) => setProjectName(event.target.value)}
             />
             <Input
               id="location"
-              label="Location"
+              label={t("settingsPage.location")}
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={(event) => setLocation(event.target.value)}
             />
             <Input
               id="coverage"
-              label="Coverage (%)"
+              label={t("settingsPage.coverage")}
               type="number"
               min={0}
               max={100}
               value={coverage}
-              onChange={(e) => setCoverage(e.target.value)}
+              onChange={(event) => setCoverage(event.target.value)}
             />
           </CardContent>
         </Card>
 
         <Card>
-          <CardTitle>Snapshot & Monitoring</CardTitle>
+          <CardTitle>{t("settingsPage.snapshotMonitoring")}</CardTitle>
           <CardContent className="mt-4 space-y-4">
             <Select
               id="snapshot-interval"
-              label="Snapshot Interval"
+              label={t("settingsPage.snapshotInterval")}
               options={intervalOptions}
               value={snapshotInterval}
-              onChange={(e) => setSnapshotInterval(e.target.value)}
+              onChange={(event) => setSnapshotInterval(event.target.value)}
             />
             <div className="grid grid-cols-2 gap-3">
               <Input
                 id="work-start"
-                label="Working Hours Start"
+                label={t("settingsPage.workStart")}
                 type="time"
                 value={workStart}
-                onChange={(e) => setWorkStart(e.target.value)}
+                onChange={(event) => setWorkStart(event.target.value)}
               />
               <Input
                 id="work-end"
-                label="Working Hours End"
+                label={t("settingsPage.workEnd")}
                 type="time"
                 value={workEnd}
-                onChange={(e) => setWorkEnd(e.target.value)}
+                onChange={(event) => setWorkEnd(event.target.value)}
               />
             </div>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardTitle>Notifications</CardTitle>
+          <CardTitle>{t("settingsPage.notifications")}</CardTitle>
           <CardContent className="mt-4 space-y-4">
             <Input
               id="notification-email"
-              label="Notification Email"
+              label={t("settingsPage.notificationEmail")}
               type="email"
               placeholder="alerts@company.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
             />
-            <p className="text-xs text-muted">
-              Alert notifications will be sent to this email address when new flags are detected.
-            </p>
+            <p className="text-xs text-muted">{t("settingsPage.notificationHelp")}</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex items-center gap-3">
         <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4" />
-          )}
-          {saving ? "Saving…" : "Save Settings"}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? t("settingsPage.saving") : t("settingsPage.save")}
         </Button>
-        {saved && (
-          <span className="text-sm text-success">Settings saved successfully</span>
-        )}
-        {error && (
-          <span className="text-sm text-destructive">{error}</span>
-        )}
+        {saved ? <span className="text-sm text-success">{t("settingsPage.saved")}</span> : null}
+        {error ? <span className="text-sm text-destructive">{error}</span> : null}
       </div>
     </div>
   );

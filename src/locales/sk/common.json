@@ -13,6 +13,7 @@
     "toggleSidebar": "Prepnúť bočný panel",
     "selectProject": "Výber projektu",
     "switchLanguage": "Prepnúť jazyk",
+    "brandCaption": "Construction inteligence",
     "lastCapture": "Posledná snímka",
     "cameraCount": "{{count}} kamier"
   },
@@ -53,6 +54,7 @@
     "footerStatus": "Stav systému"
   },
   "overview": {
+    "heroEyebrow": "Operation pulse",
     "heroDescription": "Sledujte dôveru v dodanie, pokrytie plánu a aktuálny tlak z upozornení z jedného miesta ešte pred detailnou analýzou.",
     "noMetrics": "Zatiaľ nie sú dostupné metriky. Najprv spustite analýzu.",
     "cameraCoverage": "{{count}} kamier - pokrytie {{coverage}}%",
@@ -61,7 +63,7 @@
     "reviewAlertsDescription": "Skontrolujte front upozornení a potvrďte, ktoré meškania vyžadujú zásah ako prvé.",
     "planCoverage": "Pokrytie plánu",
     "planCoverageDescription": "{{count}} oneskorených míľnikov si vyžaduje pozornosť.",
-    "latestObservedWeek": "Posledný sledovaný týždeň",
+    "latestObservedWeek": "Posledný týždeň",
     "last12Weeks": "Kĺzavý pohľad na posledných 12 týždňov stavebných signálov.",
     "scheduleDelaysDetected": "Zistených {{count}} harmonogramových {{label}}",
     "delaySingular": "omeškanie",

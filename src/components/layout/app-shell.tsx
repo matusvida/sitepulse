@@ -13,9 +13,9 @@ function DashboardFooter() {
   const { locale, t } = useLanguage();
 
   return (
-    <footer className="mt-2 border-t border-white/70 pt-5">
+    <footer className="mt-2 border-t border-white/70 pt-4 xl:pt-5">
       <div className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
-        <div className="rounded-[24px] border border-white/75 bg-white/78 p-5 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.3)] backdrop-blur-sm">
+        <div className="rounded-[22px] border border-white/75 bg-white/78 p-4 shadow-[0_18px_48px_-34px_rgba(15,23,42,0.3)] backdrop-blur-sm xl:rounded-[24px] xl:p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
             {t("shell.projectStatus")}
           </p>
@@ -31,7 +31,7 @@ function DashboardFooter() {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          <div className="rounded-[24px] border border-white/75 bg-white/78 p-4 backdrop-blur-sm">
+          <div className="rounded-[22px] border border-white/75 bg-white/78 p-3.5 backdrop-blur-sm xl:rounded-[24px] xl:p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Camera className="h-4 w-4 text-primary" />
               {t("shell.cameraCoverage")}
@@ -43,14 +43,14 @@ function DashboardFooter() {
               })}
             </p>
           </div>
-          <div className="rounded-[24px] border border-white/75 bg-white/78 p-4 backdrop-blur-sm">
+          <div className="rounded-[22px] border border-white/75 bg-white/78 p-3.5 backdrop-blur-sm xl:rounded-[24px] xl:p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Activity className="h-4 w-4 text-primary" />
               {t("shell.lastCapture")}
             </div>
             <p className="mt-2 text-sm text-muted">{formatDateTime(currentProject.lastSnapshotAt)}</p>
           </div>
-          <div className="rounded-[24px] border border-white/75 bg-white/78 p-4 backdrop-blur-sm">
+          <div className="rounded-[22px] border border-white/75 bg-white/78 p-3.5 backdrop-blur-sm xl:rounded-[24px] xl:p-4">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Globe2 className="h-4 w-4 text-primary" />
               {t("shell.language")}
@@ -94,10 +94,10 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
     <div className="relative flex min-h-screen flex-col">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.82),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(29,95,209,0.08),transparent_22%)]" />
       <TopNav onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1 overflow-y-auto lg:pl-[290px]">
-          <div className="mx-auto flex min-h-full w-full max-w-[1680px] flex-col gap-6 px-4 py-4 lg:px-6 lg:py-6">
+        <main className="flex-1">
+          <div className="mx-auto flex min-h-full w-full max-w-[1680px] flex-col gap-5 px-4 py-4 lg:px-5 lg:py-5 xl:gap-6 xl:px-6 xl:py-6">
             <div className="flex-1">{children}</div>
             <DashboardFooter />
           </div>

@@ -23,6 +23,18 @@ html {
     var(--color-background);
 }
 
+@media (min-width: 1024px) and (max-width: 1365px) {
+  html {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1366px) and (max-width: 1535px) {
+  html {
+    font-size: 14px;
+  }
+}
+
 body {
   min-height: 100vh;
   background: var(--color-background);

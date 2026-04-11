@@ -142,41 +142,41 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(237,243,251,0.88))]">
-        <CardContent className="grid gap-0 p-0 lg:grid-cols-[1.25fr_0.75fr]">
-          <div className="p-5 sm:p-6">
+        <CardContent className="grid gap-0 p-0 lg:grid-cols-[1.18fr_0.82fr] xl:grid-cols-[1.25fr_0.75fr]">
+          <div className="p-4 sm:p-5 xl:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
               {t("overview.heroEyebrow")}
             </p>
-            <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mt-2.5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between xl:mt-3">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight sm:text-[1.9rem]">
+                <h1 className="text-xl font-semibold tracking-tight sm:text-[1.7rem] xl:text-2xl xl:sm:text-[1.9rem]">
                   {currentProject.name}
                 </h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+                <p className="mt-1.5 max-w-xl text-sm leading-5 text-muted xl:mt-2 xl:leading-6">
                   {t("overview.heroDescription")}
                 </p>
               </div>
-              <div className="rounded-[22px] bg-slate-950 px-4 py-3 text-white shadow-[0_20px_42px_-26px_rgba(15,23,42,0.65)]">
+              <div className="rounded-[18px] bg-slate-950 px-3.5 py-2.5 text-white shadow-[0_20px_42px_-26px_rgba(15,23,42,0.65)] xl:rounded-[22px] xl:px-4 xl:py-3">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/60">
                   {t("overview.latestObservedWeek")}
                 </p>
-                <p className="mt-1 text-2xl font-semibold tracking-tight">{latest.progressDelta}%</p>
+                <p className="mt-1 text-xl font-semibold tracking-tight xl:text-2xl">{latest.progressDelta}%</p>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2.5 text-sm text-muted">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted xl:mt-5 xl:gap-2.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow-sm xl:gap-2 xl:px-3 xl:text-sm">
                 <MapPin className="h-4 w-4 text-primary" />
                 {currentProject.location}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow-sm xl:gap-2 xl:px-3 xl:text-sm">
                 <Camera className="h-4 w-4 text-primary" />
                 {t("overview.cameraCoverage", {
                   count: currentProject.cameraCount,
                   coverage: currentProject.coveragePercent,
                 })}
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1.5 text-xs shadow-sm xl:gap-2 xl:px-3 xl:text-sm">
                 <Clock className="h-4 w-4 text-primary" />
                 {t("overview.lastSnapshot", {
                   date: formatDateTime(currentProject.lastSnapshotAt),
@@ -185,30 +185,30 @@ export default function OverviewPage() {
             </div>
           </div>
 
-          <div className="grid gap-3 border-t border-white/70 bg-white/55 p-5 sm:grid-cols-3 lg:border-l lg:border-t-0">
-            <div className="rounded-[22px] border border-white/80 bg-white/88 p-4 shadow-sm">
+          <div className="grid gap-2.5 border-t border-white/70 bg-white/55 p-4 sm:grid-cols-3 lg:grid-cols-1 lg:border-l lg:border-t-0 xl:gap-3 xl:p-5">
+            <div className="rounded-[18px] border border-white/80 bg-white/88 p-3 shadow-sm xl:rounded-[22px] xl:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {t("overview.openScheduleAlerts")}
               </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">{scheduleAlerts.length}</p>
-              <p className="mt-1 text-xs leading-5 text-muted">{t("overview.reviewAlertsDescription")}</p>
+              <p className="mt-1.5 text-xl font-semibold tracking-tight xl:mt-2 xl:text-2xl">{scheduleAlerts.length}</p>
+              <p className="mt-1 text-xs leading-4 text-muted xl:leading-5">{t("overview.reviewAlertsDescription")}</p>
             </div>
-            <div className="rounded-[22px] border border-white/80 bg-white/88 p-4 shadow-sm">
+            <div className="rounded-[18px] border border-white/80 bg-white/88 p-3 shadow-sm xl:rounded-[22px] xl:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {t("overview.planCoverage")}
               </p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">{planCoverageValue}</p>
-              <p className="mt-1 text-xs leading-5 text-muted">
+              <p className="mt-1.5 text-xl font-semibold tracking-tight xl:mt-2 xl:text-2xl">{planCoverageValue}</p>
+              <p className="mt-1 text-xs leading-4 text-muted xl:leading-5">
                 {planStats
                   ? t("overview.planCoverageDescription", { count: planStats.delayed })
                   : t("overview.noPlan")}
               </p>
             </div>
-            <div className="rounded-[22px] border border-white/80 bg-white/88 p-4 shadow-sm">
+            <div className="rounded-[18px] border border-white/80 bg-white/88 p-3 shadow-sm xl:rounded-[22px] xl:p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                 {t("overview.summaryTitle")}
               </p>
-              <p className="mt-2 text-sm leading-6 text-muted">
+              <p className="mt-1.5 text-[13px] leading-4.5 text-muted xl:mt-2 xl:text-sm xl:leading-6">
                 {progressBefore}
                 <strong className="text-foreground">{progressValue}</strong>
                 {progressAfter}

@@ -13,7 +13,6 @@
     "toggleSidebar": "Prepnúť bočný panel",
     "selectProject": "Výber projektu",
     "switchLanguage": "Prepnúť jazyk",
-    "brandCaption": "Stavebná inteligencia",
     "lastCapture": "Posledná snímka",
     "cameraCount": "{{count}} kamier"
   },
@@ -54,12 +53,11 @@
     "footerStatus": "Stav systému"
   },
   "overview": {
-    "heroEyebrow": "Operačný pulz",
     "heroDescription": "Sledujte dôveru v dodanie, pokrytie plánu a aktuálny tlak z upozornení z jedného miesta ešte pred detailnou analýzou.",
     "noMetrics": "Zatiaľ nie sú dostupné metriky. Najprv spustite analýzu.",
     "cameraCoverage": "{{count}} kamier - pokrytie {{coverage}}%",
     "lastSnapshot": "Posledná snímka: {{date}}",
-    "openScheduleAlerts": "Otvorené harmonogramové upozornenia",
+    "openScheduleAlerts": "Otvorené upozornenia",
     "reviewAlertsDescription": "Skontrolujte front upozornení a potvrďte, ktoré meškania vyžadujú zásah ako prvé.",
     "planCoverage": "Pokrytie plánu",
     "planCoverageDescription": "{{count}} oneskorených míľnikov si vyžaduje pozornosť.",
@@ -215,7 +213,7 @@
   "comparePage": {
     "noSnapshotsTitle": "Zatiaľ nie sú dostupné žiadne snímky.",
     "noSnapshotsDescription": "Najprv spustite synchronizáciu obrázkov, aby sa sprístupnilo porovnanie pred a po.",
-    "controlsTitle": "Ovládanie porovnania",
+    "controlsTitle": "Porovnanie",
     "controlsDescription": "Vyberte dva dátumy zachytenia a posúvaním deliacej čiary skontrolujte viditeľné zmeny.",
     "snapshotA": "Snímka A",
     "snapshotB": "Snímka B",

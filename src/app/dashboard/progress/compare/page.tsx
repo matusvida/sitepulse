@@ -239,7 +239,7 @@ export default function ProgressComparePage() {
                     <img
                       src={snapshotB.url}
                       alt={`Snapshot B - ${resolvedDateB}`}
-                      className="h-full w-full object-cover pointer-events-none"
+                      className="h-full w-full object-cover object-bottom pointer-events-none"
                       draggable={false}
                       onError={() => setFailedDateB(resolvedDateB)}
                     />
@@ -256,7 +256,7 @@ export default function ProgressComparePage() {
                     <img
                       src={snapshotA.url}
                       alt={`Snapshot A - ${resolvedDateA}`}
-                      className="h-full w-full object-cover pointer-events-none"
+                      className="h-full w-full object-cover object-bottom pointer-events-none"
                       draggable={false}
                       onError={() => setFailedDateA(resolvedDateA)}
                     />

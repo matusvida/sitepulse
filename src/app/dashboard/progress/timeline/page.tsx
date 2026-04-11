@@ -165,7 +165,7 @@ function SnapshotViewer({
       <img
         src={layerA}
         alt={`Site snapshot - ${currentDate}`}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover object-bottom"
         style={{
           opacity: layerAVisible ? 1 : 0,
           transition: "opacity 200ms ease-in-out",
@@ -176,7 +176,7 @@ function SnapshotViewer({
       <img
         src={layerB}
         alt={`Site snapshot - ${currentDate}`}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover object-bottom"
         style={{
           opacity: layerAVisible ? 0 : 1,
           transition: "opacity 200ms ease-in-out",

@@ -102,7 +102,15 @@
     "reviewAlerts": "Skontrolovať upozornenia",
     "recentFlagsTitle": "Nedávne hlásenia",
     "recentFlagsDescription": "Najnovšie signály zo sledovania harmonogramu, bezpečnosti, anomálií a počasia.",
-    "noRecentFlags": "Pre tento projekt nie sú žiadne nedávne hlásenia."
+    "noRecentFlags": "Pre tento projekt nie sú žiadne nedávne hlásenia.",
+    "latestDailyBriefingTitle": "Posledn? denn? preh?ad",
+    "latestDailyBriefingDescription": "Najnov?? operat?vny koment?r k posledn?mu pozorovan?mu d?u.",
+    "latestWeeklyInsightTitle": "Posledn? t??denn? poh?ad",
+    "latestWeeklyInsightDescription": "Textov? kontext k najnov?iemu t??denn?mu sign?lu postupu.",
+    "openReport": "Otvori? report",
+    "generatedAt": "Vygenerovan? {{date}}",
+    "noNarrativeTitle": "Zatia? nie je dostupn? AI koment?r",
+    "noNarrativeDescription": "Denn? a t??denn? AI reporty sa zobrazia po ich vygenerovan? pre tento projekt."
   },
   "alertsPage": {
     "title": "Upozornenia",
@@ -258,7 +266,6 @@
     "generationFailed": "Generovanie zlyhalo",
     "analyzing": "Analyzujem fotografie stavby pomocou GPT-4o Vision. Môže to trvať 30 až 60 sekúnd...",
     "history": "História reportov",
-    "noReports": "Zatiaľ nie sú žiadne reporty",
     "fallbackSummary": "Report postupu",
     "photosAnalyzed": "Analyzovaných fotografií: {{count}}",
     "evidenceImages": "Vybraných podkladových snímok: {{count}}",
@@ -266,7 +273,47 @@
     "evidenceSectionDescription": "Otvorte presné snímky použité ako podklad pre tento report.",
     "evidenceImageFallback": "Podkladová snímka",
     "emptyTitle": "Vyberte report z bočného panela alebo vytvorte nový.",
-    "emptyDescription": "AI reporty analyzujú fotografie stavby a metriky, aby vyhodnotili stavebný postup."
+    "emptyDescription": "AI reporty analyzujú fotografie stavby a metriky, aby vyhodnotili stavebný postup.",
+    "description": "Skontrolujte opakuj?ce sa AI preh?ady a vytvorte vlastn? anal?zy pre konkr?tne ?asov? intervaly.",
+    "generateDescription": "Vytvorte ad hoc AI s?hrn pre zvolen? d?tumov? obdobie. Pl?novan? denn? a t??denn? reporty sa zobrazia ni??ie v samostatn?ch sekci?ch hist?rie.",
+    "noReportsTitle": "Zatia? nie s? ?iadne reporty",
+    "noReportsDescription": "Denn? preh?ady, t??denn? s?hrny a vlastn? anal?zy sa tu zobrazia po vygenerovan?.",
+    "generatedAt": "Vygenerovan? {{date}}",
+    "weekOf": "T??de? od {{date}}",
+    "periodUnavailable": "Obdobie nie je dostupn?",
+    "lowConfidenceTitle": "Obmedzen? podklady",
+    "lowConfidenceDescription": "Tento report vych?dza z obmedzen?ho vizu?lneho podkladu pre zvolen? obdobie.",
+    "reportTypes": {
+      "daily": "Denn? preh?ad",
+      "weekly": "T??denn? s?hrn",
+      "custom": "Vlastn? anal?za"
+    },
+    "origins": {
+      "automatic": "Automatick?",
+      "manual": "Manu?lne"
+    },
+    "confidenceLevels": {
+      "high": "Vysok? istota",
+      "medium": "Stredn? istota",
+      "low": "N?zka istota"
+    },
+    "sections": {
+      "daily": {
+        "title": "Denn? preh?ady",
+        "description": "Operat?vne denn? s?hrny pre ved?cich stavby a koordin?torov.",
+        "empty": "Zatia? nie s? dostupn? ?iadne denn? preh?ady."
+      },
+      "weekly": {
+        "title": "T??denn? s?hrny",
+        "description": "T??denn? koment?re zalo?en? na trendoch pre koordin?ciu a kontrolu projektu.",
+        "empty": "Zatia? nie s? dostupn? ?iadne t??denn? s?hrny."
+      },
+      "custom": {
+        "title": "Vlastn? anal?zy",
+        "description": "Manu?lne vytvoren? s?hrny pre zvolen? obdobie na ad hoc preverenie.",
+        "empty": "Zatia? nie s? dostupn? ?iadne vlastn? anal?zy."
+      }
+    }
   },
   "settingsPage": {
     "title": "Nastavenia",

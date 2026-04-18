@@ -4,9 +4,17 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useProject } from "@/lib/project-context";
 import { useLanguage } from "@/lib/language-context";
-import { fetchAlerts, fetchPlan, fetchWeeklyMetrics } from "@/lib/api";
+import { fetchAlerts, fetchPlan, fetchReports, fetchWeeklyMetrics } from "@/lib/api";
+import {
+  getConfidenceLabel,
+  getConfidenceVariant,
+  getReportHeadline,
+  getReportPeriodLabel,
+  groupReportsByType,
+} from "@/lib/report-utils";
 import { useApi } from "@/lib/use-api";
 import { formatDateTime, timeAgo } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -14,7 +22,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ChartWrapper } from "@/components/charts/chart-wrapper";
 import {
   Area,
@@ -29,7 +36,9 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Camera,
+  ChevronRight,
   Clock,
+  FileText,
   MapPin,
   ShieldAlert,
 } from "lucide-react";
@@ -50,11 +59,18 @@ export default function OverviewPage() {
     () => fetchPlan(currentProject.id),
     [currentProject.id],
   );
+  const { data: reports } = useApi(
+    () => fetchReports(currentProject.id),
+    [currentProject.id],
+  );
 
   const scheduleAlerts = useMemo(
     () => (alerts ?? []).filter((alert) => alert.type === "schedule" && alert.status === "open"),
     [alerts],
   );
+  const groupedReports = useMemo(() => groupReportsByType(reports), [reports]);
+  const latestDailyReport = groupedReports.daily[0] ?? null;
+  const latestWeeklyReport = groupedReports.weekly[0] ?? null;
 
   const planStats = useMemo(() => {
     const milestones = planData?.milestones ?? [];
@@ -138,6 +154,74 @@ export default function OverviewPage() {
   const activitySummary = t("overview.summaryActivity", { value: activityValue });
   const [activityBefore = "", activityAfter = ""] = activitySummary.split(activityValue);
   const planCoverageValue = planStats ? `${planStats.completed}/${planStats.total}` : "0/0";
+
+  const renderNarrativeCard = (
+    title: string,
+    description: string,
+    emptyTitle: string,
+    emptyDescription: string,
+    report: NonNullable<typeof latestDailyReport>,
+  ) => {
+    const confidenceLabel = getConfidenceLabel(report, t);
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-[24px] border border-white/80 bg-white/78 p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline">{getReportPeriodLabel(report, t)}</Badge>
+              {confidenceLabel ? (
+                <Badge variant={getConfidenceVariant(report)}>{confidenceLabel}</Badge>
+              ) : null}
+            </div>
+            <p className="mt-3 text-sm font-semibold text-foreground">
+              {getReportHeadline(report, t)}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {report.summary || t("reportsPage.fallbackSummary")}
+            </p>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p className="text-xs text-muted">
+                {report.createdAt
+                  ? t("overview.generatedAt", { date: formatDateTime(report.createdAt) })
+                  : emptyTitle}
+              </p>
+              <Link
+                href="/dashboard/reports"
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+              >
+                {t("overview.openReport")}
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderNarrativeEmptyState = (title: string, description: string) => (
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-[24px] border border-dashed border-white/80 bg-accent/50 p-5 text-sm text-muted">
+          <div className="flex items-start gap-3">
+            <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+            <div>
+              <p className="font-medium text-foreground">{t("overview.noNarrativeTitle")}</p>
+              <p className="mt-1 leading-6">{t("overview.noNarrativeDescription")}</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
@@ -270,6 +354,33 @@ export default function OverviewPage() {
             </div>
           </Card>
         ))}
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        {latestDailyReport
+          ? renderNarrativeCard(
+              t("overview.latestDailyBriefingTitle"),
+              t("overview.latestDailyBriefingDescription"),
+              t("overview.noNarrativeTitle"),
+              t("overview.noNarrativeDescription"),
+              latestDailyReport,
+            )
+          : renderNarrativeEmptyState(
+              t("overview.latestDailyBriefingTitle"),
+              t("overview.latestDailyBriefingDescription"),
+            )}
+        {latestWeeklyReport
+          ? renderNarrativeCard(
+              t("overview.latestWeeklyInsightTitle"),
+              t("overview.latestWeeklyInsightDescription"),
+              t("overview.noNarrativeTitle"),
+              t("overview.noNarrativeDescription"),
+              latestWeeklyReport,
+            )
+          : renderNarrativeEmptyState(
+              t("overview.latestWeeklyInsightTitle"),
+              t("overview.latestWeeklyInsightDescription"),
+            )}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">

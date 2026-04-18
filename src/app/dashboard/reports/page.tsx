@@ -1,18 +1,39 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Markdown from "react-markdown";
 import { useProject } from "@/lib/project-context";
-import { generateReport, fetchReports, fetchReport, fetchSnapshotDates } from "@/lib/api";
+import { fetchReport, fetchReports, fetchSnapshotDates, generateReport } from "@/lib/api";
+import {
+  getConfidenceLabel,
+  getConfidenceVariant,
+  getEvidenceImageCount,
+  getReportHeadline,
+  getReportOriginLabel,
+  getReportPeriodLabel,
+  getReportTypeLabel,
+  groupReportsByType,
+  isLowConfidence,
+  pickPreferredReport,
+} from "@/lib/report-utils";
 import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
-import { Card, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
-import type { ProgressReport } from "@/lib/types";
-import { Sparkles, Loader2, FileText, Calendar, Image as ImageIcon, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
+import type { ProgressReport, ProgressReportType, ReportEvidenceImage } from "@/lib/types";
+import {
+  ArrowUpRight,
+  Calendar,
+  Clock,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
 
 export default function ReportsPage() {
   const { currentProject } = useProject();
@@ -28,6 +49,12 @@ export default function ReportsPage() {
   );
 
   const sortedDates = useMemo(() => (dates ?? []).slice().sort(), [dates]);
+  const dateOptions = useMemo(
+    () => sortedDates.map((date) => ({ value: date, label: date })),
+    [sortedDates],
+  );
+  const groupedReports = useMemo(() => groupReportsByType(reports), [reports]);
+
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -37,26 +64,6 @@ export default function ReportsPage() {
 
   const effectiveFrom = dateFrom || sortedDates[0] || "";
   const effectiveTo = dateTo || sortedDates[sortedDates.length - 1] || "";
-
-  const dateOptions = useMemo(
-    () => sortedDates.map((date) => ({ value: date, label: date })),
-    [sortedDates],
-  );
-
-  const handleGenerate = useCallback(async () => {
-    if (!effectiveFrom || !effectiveTo) return;
-    setGenerating(true);
-    setGenError(null);
-    try {
-      const report = await generateReport(currentProject.id, effectiveFrom, effectiveTo);
-      setActiveReport(report);
-      refetch();
-    } catch (error) {
-      setGenError(error instanceof Error ? error.message : t("reportsPage.generationFailed"));
-    } finally {
-      setGenerating(false);
-    }
-  }, [currentProject.id, effectiveFrom, effectiveTo, refetch, t]);
 
   const handleViewReport = useCallback(
     async (reportId: number) => {
@@ -71,9 +78,134 @@ export default function ReportsPage() {
     [currentProject.id],
   );
 
+  useEffect(() => {
+    if (!reports?.length) {
+      setActiveReport(null);
+      return;
+    }
+
+    if (activeReport?.contentMd) {
+      return;
+    }
+
+    if (activeReport && reports.some((report) => report.id === activeReport.id)) {
+      return;
+    }
+
+    const preferredReport = pickPreferredReport(reports);
+    if (!preferredReport) {
+      return;
+    }
+
+    void handleViewReport(preferredReport.id);
+  }, [activeReport, handleViewReport, reports]);
+
+  const handleGenerate = useCallback(async () => {
+    if (!effectiveFrom || !effectiveTo) {
+      return;
+    }
+
+    setGenerating(true);
+    setGenError(null);
+    try {
+      const report = await generateReport(currentProject.id, effectiveFrom, effectiveTo);
+      setActiveReport(report);
+      refetch();
+    } catch (error) {
+      setGenError(error instanceof Error ? error.message : t("reportsPage.generationFailed"));
+    } finally {
+      setGenerating(false);
+    }
+  }, [currentProject.id, effectiveFrom, effectiveTo, refetch, t]);
+
+  const renderReportSection = useCallback(
+    (type: ProgressReportType, items: ProgressReport[]) => (
+      <section key={type} className="space-y-2">
+        <div className="px-1">
+          <h2 className="text-sm font-medium text-foreground">
+            {t(`reportsPage.sections.${type}.title`)}
+          </h2>
+          <p className="mt-1 text-xs text-muted">
+            {t(`reportsPage.sections.${type}.description`)}
+          </p>
+        </div>
+        {items.length === 0 ? (
+          <Card className="rounded-[22px] py-5 text-center">
+            <p className="text-xs text-muted">{t(`reportsPage.sections.${type}.empty`)}</p>
+          </Card>
+        ) : (
+          items.map((report) => {
+            const confidenceLabel = getConfidenceLabel(report, t);
+            return (
+              <button
+                key={report.id}
+                onClick={() => handleViewReport(report.id)}
+                className={`w-full rounded-[22px] border p-3 text-left transition-colors cursor-pointer ${
+                  activeReport?.id === report.id
+                    ? "border-primary bg-primary/5"
+                    : "border-white/70 bg-white/72 hover:bg-accent"
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline" className="text-[10px]">
+                    {getReportTypeLabel(report, t)}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    {getReportOriginLabel(report, t)}
+                  </Badge>
+                  {confidenceLabel ? (
+                    <Badge variant={getConfidenceVariant(report)} className="text-[10px]">
+                      {confidenceLabel}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="mt-2 text-xs font-medium text-foreground line-clamp-2">
+                  {getReportHeadline(report, t)}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {getReportPeriodLabel(report, t)}
+                  </span>
+                  {report.createdAt ? (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatDateTime(report.createdAt)}
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })
+        )}
+      </section>
+    ),
+    [activeReport?.id, handleViewReport, t],
+  );
+
+  const activeConfidenceLabel = activeReport ? getConfidenceLabel(activeReport, t) : null;
+  const activeEvidenceImageCount = activeReport ? getEvidenceImageCount(activeReport) : null;
+  const activeEvidenceImages = activeReport?.evidenceImages ?? [];
+
+  const getEvidenceLabel = useCallback(
+    (image: ReportEvidenceImage, index: number) => {
+      if (image.capturedAt) {
+        return formatDateTime(image.capturedAt);
+      }
+      if (image.date) {
+        return image.date;
+      }
+      return `${t("reportsPage.evidenceImageFallback")} ${index + 1}`;
+    },
+    [t],
+  );
+
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold">{t("reportsPage.title")}</h1>
+      <div>
+        <h1 className="text-xl font-semibold">{t("reportsPage.title")}</h1>
+        <p className="mt-1 text-sm text-muted">{t("reportsPage.description")}</p>
+      </div>
 
       <Card>
         <CardTitle className="flex items-center gap-2">
@@ -81,6 +213,7 @@ export default function ReportsPage() {
           {t("reportsPage.generateTitle")}
         </CardTitle>
         <CardContent className="mt-4">
+          <p className="mb-4 max-w-2xl text-sm text-muted">{t("reportsPage.generateDescription")}</p>
           <div className="flex flex-wrap items-end gap-4">
             <Select
               id="date-from"
@@ -106,90 +239,130 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <div className="space-y-2">
-          <h2 className="px-1 text-sm font-medium text-muted">{t("reportsPage.history")}</h2>
+      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+        <div className="space-y-4">
           {loadingList ? (
-            <p className="px-1 text-sm text-muted">{t("common.loading")}</p>
+            <Card className="py-8 text-center">
+              <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-muted" />
+              <p className="text-sm text-muted">{t("common.loading")}</p>
+            </Card>
           ) : !reports || reports.length === 0 ? (
-            <Card className="py-6 text-center">
-              <FileText className="mx-auto mb-2 h-6 w-6 text-muted opacity-30" />
-              <p className="text-xs text-muted">{t("reportsPage.noReports")}</p>
+            <Card className="py-8 text-center">
+              <FileText className="mx-auto mb-3 h-8 w-8 text-muted opacity-30" />
+              <p className="text-sm text-foreground">{t("reportsPage.noReportsTitle")}</p>
+              <p className="mt-1 text-xs text-muted">{t("reportsPage.noReportsDescription")}</p>
             </Card>
           ) : (
-            reports.map((report) => (
-              <button
-                key={report.id}
-                onClick={() => handleViewReport(report.id)}
-                className={`w-full rounded-lg border p-3 text-left transition-colors cursor-pointer ${
-                  activeReport?.id === report.id ? "border-primary bg-primary/5" : "hover:bg-accent"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="text-[10px]">
-                    {report.reportType}
-                  </Badge>
-                  <span className="text-[10px] text-muted">
-                    {report.createdAt ? formatDate(report.createdAt) : ""}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs font-medium line-clamp-2">
-                  {report.summary || t("reportsPage.fallbackSummary")}
-                </p>
-                <div className="mt-1 flex items-center gap-2 text-[10px] text-muted">
-                  {report.dateRangeStart && report.dateRangeEnd ? (
-                    <span className="flex items-center gap-0.5">
-                      <Calendar className="h-2.5 w-2.5" />
-                      {report.dateRangeStart} - {report.dateRangeEnd}
-                    </span>
-                  ) : null}
-                  {report.imageCount != null ? (
-                    <span className="flex items-center gap-0.5">
-                      <ImageIcon className="h-2.5 w-2.5" />
-                      {report.imageCount}
-                    </span>
-                  ) : null}
-                </div>
-              </button>
-            ))
+            <>
+              {renderReportSection("daily", groupedReports.daily)}
+              {renderReportSection("weekly", groupedReports.weekly)}
+              {renderReportSection("custom", groupedReports.custom)}
+            </>
           )}
         </div>
 
-        <Card className="min-h-[400px]">
+        <Card className="min-h-[460px]">
           {loadingDetail ? (
             <div className="flex h-full items-center justify-center py-20">
               <Loader2 className="h-6 w-6 animate-spin text-muted" />
             </div>
           ) : activeReport?.contentMd ? (
             <>
-              <div className="mb-4 flex flex-wrap items-center gap-3 border-b pb-4">
-                <Badge variant="default">{activeReport.reportType}</Badge>
-                {activeReport.dateRangeStart && activeReport.dateRangeEnd ? (
-                  <span className="flex items-center gap-1 text-xs text-muted">
-                    <Calendar className="h-3 w-3" />
-                    {activeReport.dateRangeStart} - {activeReport.dateRangeEnd}
+              <div className="border-b pb-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="default">{getReportTypeLabel(activeReport, t)}</Badge>
+                  <Badge variant="outline">{getReportOriginLabel(activeReport, t)}</Badge>
+                  {activeConfidenceLabel ? (
+                    <Badge variant={getConfidenceVariant(activeReport)}>{activeConfidenceLabel}</Badge>
+                  ) : null}
+                </div>
+                <h2 className="mt-3 text-lg font-semibold tracking-tight text-foreground">
+                  {getReportHeadline(activeReport, t)}
+                </h2>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {getReportPeriodLabel(activeReport, t)}
                   </span>
-                ) : null}
-                {activeReport.imageCount != null ? (
-                  <span className="flex items-center gap-1 text-xs text-muted">
-                    <ImageIcon className="h-3 w-3" />
-                    {t("reportsPage.photosAnalyzed", { count: activeReport.imageCount })}
-                  </span>
-                ) : null}
-                {activeReport.modelUsed ? (
-                  <span className="flex items-center gap-1 text-xs text-muted">
-                    <Sparkles className="h-3 w-3" />
-                    {activeReport.modelUsed}
-                  </span>
-                ) : null}
-                {activeReport.createdAt ? (
-                  <span className="ml-auto flex items-center gap-1 text-xs text-muted">
-                    <Clock className="h-3 w-3" />
-                    {formatDate(activeReport.createdAt)}
-                  </span>
-                ) : null}
+                  {activeReport.imageCount != null ? (
+                    <span className="flex items-center gap-1">
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      {t("reportsPage.photosAnalyzed", { count: activeReport.imageCount })}
+                    </span>
+                  ) : null}
+                  {activeEvidenceImageCount != null ? (
+                    <span className="flex items-center gap-1">
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      {t("reportsPage.evidenceImages", { count: activeEvidenceImageCount })}
+                    </span>
+                  ) : null}
+                  {activeReport.modelUsed ? (
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      {activeReport.modelUsed}
+                    </span>
+                  ) : null}
+                  {activeReport.createdAt ? (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {t("reportsPage.generatedAt", { date: formatDateTime(activeReport.createdAt) })}
+                    </span>
+                  ) : null}
+                </div>
               </div>
-              <div className="prose prose-sm prose-zinc max-w-none [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_p]:text-sm [&_p]:text-muted [&_li]:text-sm [&_li]:text-muted [&_strong]:text-foreground">
+
+              {isLowConfidence(activeReport) ? (
+                <div className="mt-4 rounded-[22px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                    <div>
+                      <p className="font-medium">{t("reportsPage.lowConfidenceTitle")}</p>
+                      <p className="mt-1 text-xs leading-5 text-amber-800">
+                        {activeReport.confidenceNote?.trim() || t("reportsPage.lowConfidenceDescription")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {activeEvidenceImages.length > 0 ? (
+                <div className="mt-5 rounded-[22px] border border-border/70 bg-accent/30 p-4">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {t("reportsPage.evidenceSectionTitle")}
+                    </h3>
+                  </div>
+                  <p className="mt-1 text-xs text-muted">
+                    {t("reportsPage.evidenceSectionDescription")}
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {activeEvidenceImages.map((image, index) => (
+                      <a
+                        key={`${image.url}-${index}`}
+                        href={image.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group rounded-[18px] border border-border/70 bg-background px-3 py-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">
+                              {getEvidenceLabel(image, index)}
+                            </p>
+                            <p className="mt-1 line-clamp-2 break-all text-[11px] text-muted">
+                              {image.key || image.url}
+                            </p>
+                          </div>
+                          <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-primary" />
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="prose prose-sm prose-zinc mt-5 max-w-none [&_h1]:text-lg [&_h1]:font-semibold [&_h2]:text-base [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-semibold [&_p]:text-sm [&_p]:text-muted [&_li]:text-sm [&_li]:text-muted [&_strong]:text-foreground">
                 <Markdown>{activeReport.contentMd}</Markdown>
               </div>
             </>

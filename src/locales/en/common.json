@@ -27,7 +27,7 @@
     "alerts": "Alerts",
     "reports": "Reports",
     "settings": "Settings",
-    "projectSwitcher": "Project switcher",
+    "projectSwitcher": "Projects",
     "workspaceNoteTitle": "Daily operations",
     "workspaceNoteBody": "Keep alerts, reports, and plan progress aligned before every site review."
   },
@@ -99,6 +99,14 @@
     "summaryDelayRisk": "Delay risk assessed as",
     "operationsTitle": "Operational readout",
     "operationsDescription": "Use this summary to decide whether the team should shift into alerts, plan tracking, or image review next.",
+    "latestDailyBriefingTitle": "Latest daily briefing",
+    "latestDailyBriefingDescription": "The most recent operational narrative for the latest observed day.",
+    "latestWeeklyInsightTitle": "Latest weekly insight",
+    "latestWeeklyInsightDescription": "Narrative context for the latest weekly progress signal.",
+    "openReport": "Open report",
+    "generatedAt": "Generated {{date}}",
+    "noNarrativeTitle": "No AI narrative yet",
+    "noNarrativeDescription": "Daily and weekly AI reports will appear here once reports are generated for this project.",
     "reviewAlerts": "Review alerts",
     "recentFlagsTitle": "Recent flags",
     "recentFlagsDescription": "Latest issues surfaced from schedule, safety, anomaly, and weather checks.",
@@ -250,19 +258,62 @@
   },
   "reportsPage": {
     "title": "AI Reports",
-    "generateTitle": "Generate Progress Report",
+    "description": "Review recurring AI briefings and create custom analyses for specific time windows.",
+    "generateTitle": "Generate Custom Analysis",
+    "generateDescription": "Create an ad hoc AI summary for a selected date range. Scheduled daily and weekly reports appear below as separate history sections.",
     "from": "From",
     "to": "To",
-    "generate": "Generate Report",
+    "generate": "Generate analysis",
     "generating": "Generating...",
     "generationFailed": "Generation failed",
     "analyzing": "Analyzing site photos with GPT-4o Vision. This may take 30-60 seconds...",
-    "history": "Report History",
-    "noReports": "No reports yet",
+    "history": "Report history",
+    "noReportsTitle": "No reports yet",
+    "noReportsDescription": "Daily briefings, weekly summaries, and custom analyses will appear here once generated.",
     "fallbackSummary": "Progress report",
     "photosAnalyzed": "{{count}} photos analyzed",
+    "evidenceImages": "{{count}} evidence images selected",
+    "evidenceSectionTitle": "Evidence images",
+    "evidenceSectionDescription": "Open the exact images used as evidence for this report.",
+    "evidenceImageFallback": "Evidence image",
+    "generatedAt": "Generated {{date}}",
+    "weekOf": "Week of {{date}}",
+    "periodUnavailable": "Period unavailable",
+    "lowConfidenceTitle": "Limited evidence",
+    "lowConfidenceDescription": "This report is based on limited visual evidence for the selected period.",
     "emptyTitle": "Select a report from the sidebar, or generate a new one.",
-    "emptyDescription": "AI reports analyze site photos and metrics to assess construction progress."
+    "emptyDescription": "AI reports analyze site photos and metrics to assess construction progress.",
+    "reportTypes": {
+      "daily": "Daily Briefing",
+      "weekly": "Weekly Summary",
+      "custom": "Custom Analysis"
+    },
+    "origins": {
+      "automatic": "Automatic",
+      "manual": "Manual"
+    },
+    "confidenceLevels": {
+      "high": "High confidence",
+      "medium": "Medium confidence",
+      "low": "Low confidence"
+    },
+    "sections": {
+      "daily": {
+        "title": "Daily Briefings",
+        "description": "Operational day-level summaries for site leads and coordinators.",
+        "empty": "No daily briefings available yet."
+      },
+      "weekly": {
+        "title": "Weekly Summaries",
+        "description": "Trend-based weekly narratives for project coordination and review.",
+        "empty": "No weekly summaries available yet."
+      },
+      "custom": {
+        "title": "Custom Analyses",
+        "description": "Manual date-range summaries created for ad hoc investigation.",
+        "empty": "No custom analyses available yet."
+      }
+    }
   },
   "settingsPage": {
     "title": "Settings",

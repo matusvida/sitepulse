@@ -27,7 +27,7 @@
     "alerts": "Upozornenia",
     "reports": "Reporty",
     "settings": "Nastavenia",
-    "projectSwitcher": "Výber projektu",
+    "projectSwitcher": "Projekt",
     "workspaceNoteTitle": "Denná prevádzka",
     "workspaceNoteBody": "Majte upozornenia, reporty a priebeh plánu zosúladené pred každou kontrolou stavby."
   },
@@ -261,6 +261,10 @@
     "noReports": "Zatiaľ nie sú žiadne reporty",
     "fallbackSummary": "Report postupu",
     "photosAnalyzed": "Analyzovaných fotografií: {{count}}",
+    "evidenceImages": "Vybraných podkladových snímok: {{count}}",
+    "evidenceSectionTitle": "Podkladové snímky",
+    "evidenceSectionDescription": "Otvorte presné snímky použité ako podklad pre tento report.",
+    "evidenceImageFallback": "Podkladová snímka",
     "emptyTitle": "Vyberte report z bočného panela alebo vytvorte nový.",
     "emptyDescription": "AI reporty analyzujú fotografie stavby a metriky, aby vyhodnotili stavebný postup."
   },

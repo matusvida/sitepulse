@@ -40,14 +40,13 @@ export type AlertSeverity = Alert["severity"];
 export type AlertStatus = Alert["status"];
 
 export type Timeframe = "4w" | "12w" | "26w";
+
 export interface SnapshotMetadata {
   date: string;
   url: string;
   expiresAt: string;
   mediaType: string;
 }
-
-// ── Plan ────────────────────────────────────────────────────────────────────
 
 export type MilestoneStatus = "not_started" | "on_track" | "delayed" | "completed";
 
@@ -75,16 +74,32 @@ export interface PlanData {
   milestones: PlanMilestone[];
 }
 
-// ── Reports ─────────────────────────────────────────────────────────────────
+export type ProgressReportType = "daily" | "weekly" | "custom";
+export type ReportGenerationOrigin = "automatic" | "manual";
+export type ReportConfidenceLevel = "high" | "medium" | "low";
+
+export interface ReportEvidenceImage {
+  capturedAt: string | null;
+  date: string | null;
+  url: string;
+  key: string | null;
+}
 
 export interface ProgressReport {
   id: number;
-  reportType: string;
+  reportType: ProgressReportType | string;
   contentMd?: string;
   summary: string;
+  headline?: string | null;
   dateRangeStart: string | null;
   dateRangeEnd: string | null;
   imageCount: number;
+  evidenceImageCount?: number | null;
   modelUsed: string;
+  generationOrigin?: ReportGenerationOrigin | string | null;
+  confidenceLevel?: ReportConfidenceLevel | string | null;
+  confidenceNote?: string | null;
+  periodLabel?: string | null;
   createdAt: string | null;
+  evidenceImages?: ReportEvidenceImage[];
 }

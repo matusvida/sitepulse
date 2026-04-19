@@ -3,8 +3,9 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useProject } from "@/lib/project-context";
+import { ACTIVITY_STATUS, type ActivityStatus, WEATHER_STATUS, type WeatherStatus } from "@/lib/activity";
 import { useLanguage } from "@/lib/language-context";
-import { fetchAlerts, fetchPlan, fetchReports, fetchWeeklyMetrics } from "@/lib/api";
+import { fetchActivitySummary, fetchAlerts, fetchDailyMetrics, fetchPlan, fetchReports, fetchWeeklyMetrics } from "@/lib/api";
 import {
   getConfidenceLabel,
   getConfidenceVariant,
@@ -37,10 +38,13 @@ import {
   ArrowUpRight,
   Camera,
   ChevronRight,
+  CloudRain,
   Clock,
   FileText,
+  HelpCircle,
   MapPin,
   ShieldAlert,
+  Truck,
 } from "lucide-react";
 
 export default function OverviewPage() {
@@ -53,6 +57,14 @@ export default function OverviewPage() {
   );
   const { data: alerts, loading: loadingAlerts } = useApi(
     () => fetchAlerts(currentProject.id),
+    [currentProject.id],
+  );
+  const { data: activitySummary, loading: loadingActivitySummary } = useApi(
+    () => fetchActivitySummary(currentProject.id, 28),
+    [currentProject.id],
+  );
+  const { data: dailyMetrics } = useApi(
+    () => fetchDailyMetrics(currentProject.id, 14),
     [currentProject.id],
   );
   const { data: planData } = useApi(
@@ -71,6 +83,7 @@ export default function OverviewPage() {
   const groupedReports = useMemo(() => groupReportsByType(reports), [reports]);
   const latestDailyReport = groupedReports.daily[0] ?? null;
   const latestWeeklyReport = groupedReports.weekly[0] ?? null;
+  const recentDaily = (dailyMetrics ?? []).slice(-7).reverse();
 
   const planStats = useMemo(() => {
     const milestones = planData?.milestones ?? [];
@@ -83,7 +96,7 @@ export default function OverviewPage() {
     };
   }, [planData]);
 
-  if (loadingWeekly || loadingAlerts || !weekly || !alerts) {
+  if (loadingWeekly || loadingAlerts || loadingActivitySummary || !weekly || !alerts || !activitySummary) {
     return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
   }
 
@@ -151,9 +164,65 @@ export default function OverviewPage() {
   const [progressBefore = "", progressAfter = ""] = progressSummary.split(progressValue);
 
   const activityValue = latest.activityIndex.toFixed(0);
-  const activitySummary = t("overview.summaryActivity", { value: activityValue });
-  const [activityBefore = "", activityAfter = ""] = activitySummary.split(activityValue);
+  const activitySummaryText = t("overview.summaryActivity", { value: activityValue });
+  const [activityBefore = "", activityAfter = ""] = activitySummaryText.split(activityValue);
   const planCoverageValue = planStats ? `${planStats.completed}/${planStats.total}` : "0/0";
+  const activityBreakdown = [
+    {
+      key: "active",
+      icon: Truck,
+      label: t("overview.kpiActiveDays"),
+      value: activitySummary.activeDays,
+      note: t("overview.kpiActiveDaysNote", { count: activitySummary.totalDays }),
+      tone: "bg-emerald-50 text-emerald-700",
+    },
+    {
+      key: "inactive",
+      icon: Clock,
+      label: t("overview.kpiInactiveDays"),
+      value: activitySummary.inactiveDays,
+      note: t("overview.kpiInactiveDaysNote"),
+      tone: "bg-slate-100 text-slate-700",
+    },
+    {
+      key: "unknown",
+      icon: HelpCircle,
+      label: t("overview.kpiUnknownDays"),
+      value: activitySummary.unknownDays,
+      note: t("overview.kpiUnknownDaysNote"),
+      tone: "bg-amber-50 text-amber-700",
+    },
+    {
+      key: "weather",
+      icon: CloudRain,
+      label: t("overview.kpiWeatherImpactedDays"),
+      value: activitySummary.weatherImpactedDays,
+      note: t("overview.kpiWeatherImpactedDaysNote", {
+        rain: activitySummary.rainDays,
+        snow: activitySummary.snowDays,
+      }),
+      tone: "bg-sky-50 text-sky-700",
+    },
+  ];
+
+  const formatActivityLabel = (status: ActivityStatus) => {
+    if (status === ACTIVITY_STATUS.ACTIVE) return t("overview.activityStatusActive");
+    if (status === ACTIVITY_STATUS.INACTIVE) return t("overview.activityStatusInactive");
+    return t("overview.activityStatusUnknown");
+  };
+
+  const formatWeatherLabel = (status: WeatherStatus) => {
+    if (status === WEATHER_STATUS.RAIN) return t("overview.weatherStatusRain");
+    if (status === WEATHER_STATUS.SNOW) return t("overview.weatherStatusSnow");
+    if (status === WEATHER_STATUS.UNCLEAR) return t("overview.weatherStatusUnclear");
+    return t("overview.weatherStatusNormal");
+  };
+
+  const activityBadgeVariant = (status: ActivityStatus) => {
+    if (status === ACTIVITY_STATUS.ACTIVE) return "low" as const;
+    if (status === ACTIVITY_STATUS.INACTIVE) return "outline" as const;
+    return "medium" as const;
+  };
 
   const renderNarrativeCard = (
     title: string,
@@ -356,6 +425,23 @@ export default function OverviewPage() {
         ))}
       </div>
 
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {activityBreakdown.map((metric) => (
+          <Card key={metric.key} className="p-5">
+            <div className="flex items-start gap-4">
+              <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${metric.tone}`}>
+                <metric.icon className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-muted">{metric.label}</p>
+                <div className="mt-2 text-2xl font-semibold tracking-tight">{metric.value}</div>
+                <p className="mt-2 text-sm text-muted">{metric.note}</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-2">
         {latestDailyReport
           ? renderNarrativeCard(
@@ -476,35 +562,42 @@ export default function OverviewPage() {
       <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <Card>
           <CardHeader>
-            <CardTitle>{t("overview.activityIndexChart")}</CardTitle>
-            <CardDescription>{t("overview.activityChartDescription")}</CardDescription>
+            <CardTitle>{t("overview.dailyActivityTitle")}</CardTitle>
+            <CardDescription>{t("overview.dailyActivityDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <ChartWrapper height={300}>
-              <AreaChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d5dfec" />
-                <XAxis
-                  dataKey="weekStart"
-                  tickFormatter={(value) => String(value).slice(5)}
-                  tick={{ fontSize: 11 }}
-                  stroke="#94a3b8"
-                />
-                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                <Tooltip
-                  contentStyle={{ fontSize: 12, borderRadius: 16, border: "1px solid #d5dfec" }}
-                  formatter={(value) => [Number(value).toFixed(1), t("overview.tooltipActivityIndex")]}
-                  labelFormatter={(label) => t("overview.tooltipWeekOf", { label })}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="activityIndex"
-                  stroke="#16a34a"
-                  fill="#16a34a"
-                  fillOpacity={0.1}
-                  strokeWidth={2.5}
-                />
-              </AreaChart>
-            </ChartWrapper>
+            {recentDaily.length === 0 ? (
+              <div className="rounded-[24px] bg-accent/60 p-5 text-sm text-muted">
+                {t("overview.noDailyActivity")}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentDaily.map((day) => (
+                  <div
+                    key={day.date}
+                    className="flex flex-col gap-3 rounded-[24px] border border-white/80 bg-white/78 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground">{day.date}</p>
+                      <p className="mt-1 text-sm text-muted">
+                        {day.summaryNote || t("overview.noDailyActivityNote")}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant={activityBadgeVariant(day.activityStatus)}>
+                        {formatActivityLabel(day.activityStatus)}
+                      </Badge>
+                      <Badge variant={day.weatherImpacted ? "medium" : "outline"}>
+                        {formatWeatherLabel(day.weatherStatus)}
+                      </Badge>
+                      {day.weatherImpacted ? (
+                        <Badge variant="medium">{t("overview.weatherImpactedBadge")}</Badge>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

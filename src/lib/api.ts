@@ -1,8 +1,9 @@
-import type { Project, WeeklyMetrics, DailyMetrics, Alert, PlanData, PlanMilestone, ProgressReport, SnapshotMetadata } from "./types";
+import type { Project, WeeklyMetrics, DailyMetrics, Alert, PlanData, PlanMilestone, ProgressReport, SnapshotMetadata, ActivitySummary } from "./types";
 import {
   projects as mockProjects,
   getWeeklyMetrics as mockWeekly,
   getDailyMetrics as mockDaily,
+  getActivitySummary as mockActivitySummary,
   getAlerts as mockAlerts,
 } from "./mock-data";
 
@@ -172,6 +173,19 @@ export async function fetchSnapshots(projectId: string): Promise<SnapshotMetadat
     } catch {
       return [];
     }
+  }
+}
+
+export async function fetchActivitySummary(
+  projectId: string,
+  days = 28,
+): Promise<ActivitySummary> {
+  try {
+    return await get<ActivitySummary>(
+      `/api/projects/${projectId}/activity/summary?days=${days}`,
+    );
+  } catch {
+    return mockActivitySummary(projectId);
   }
 }
 

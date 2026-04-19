@@ -1,4 +1,5 @@
-import { Project, WeeklyMetrics, DailyMetrics, Alert } from "./types";
+import { ACTIVITY_CONFIDENCE, ACTIVITY_STATUS, WEATHER_STATUS } from "./activity";
+import { Project, WeeklyMetrics, DailyMetrics, Alert, ActivitySummary } from "./types";
 
 export const projects: Project[] = [
   {
@@ -73,6 +74,28 @@ function generateDailyMetrics(projectId: string): DailyMetrics[] {
       peopleCount: Math.round((8 + noise * 32) * weekendFactor),
       vehicleCount: Math.round((2 + noise * 10) * weekendFactor),
       activeHours: Math.round((isWeekend ? 1 : 6 + noise * 5) * 10) / 10,
+      activityStatus:
+        isWeekend && noise < 0.45
+          ? ACTIVITY_STATUS.INACTIVE
+          : noise > 0.25 || !isWeekend
+            ? ACTIVITY_STATUS.ACTIVE
+            : ACTIVITY_STATUS.UNKNOWN,
+      activityConfidence: isWeekend ? ACTIVITY_CONFIDENCE.MEDIUM : ACTIVITY_CONFIDENCE.HIGH,
+      weatherStatus:
+        noise < 0.12
+          ? WEATHER_STATUS.SNOW
+          : noise < 0.28
+            ? WEATHER_STATUS.RAIN
+            : WEATHER_STATUS.CLEAR_OR_NORMAL,
+      weatherImpacted: noise < 0.28,
+      reasonCodes:
+        isWeekend && noise < 0.45
+          ? ["no_movement_signal"]
+          : ["movement_signals_present", "vehicle_activity_present"],
+      summaryNote:
+        isWeekend && noise < 0.45
+          ? "activity=inactive, weather=clear_or_normal, reasons=[no_movement_signal]"
+          : "activity=active, weather=clear_or_normal, reasons=[movement_signals_present]",
     };
   });
 }
@@ -220,6 +243,19 @@ export function getDailyMetrics(projectId: string): DailyMetrics[] {
     dailyCache.set(projectId, generateDailyMetrics(projectId));
   }
   return dailyCache.get(projectId)!;
+}
+
+export function getActivitySummary(projectId: string): ActivitySummary {
+  const daily = getDailyMetrics(projectId);
+  return {
+    totalDays: daily.length,
+    activeDays: daily.filter((day) => day.activityStatus === ACTIVITY_STATUS.ACTIVE).length,
+    inactiveDays: daily.filter((day) => day.activityStatus === ACTIVITY_STATUS.INACTIVE).length,
+    unknownDays: daily.filter((day) => day.activityStatus === ACTIVITY_STATUS.UNKNOWN).length,
+    weatherImpactedDays: daily.filter((day) => day.weatherImpacted).length,
+    rainDays: daily.filter((day) => day.weatherStatus === WEATHER_STATUS.RAIN).length,
+    snowDays: daily.filter((day) => day.weatherStatus === WEATHER_STATUS.SNOW).length,
+  };
 }
 
 export function getAlerts(projectId: string): Alert[] {

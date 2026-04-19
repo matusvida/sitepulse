@@ -1,3 +1,5 @@
+import type { ActivityConfidence, ActivityStatus, WeatherStatus } from "./activity";
+
 export interface Project {
   id: string;
   name: string;
@@ -20,6 +22,22 @@ export interface DailyMetrics {
   peopleCount: number;
   vehicleCount: number;
   activeHours: number;
+  activityStatus: ActivityStatus;
+  activityConfidence: ActivityConfidence;
+  weatherStatus: WeatherStatus;
+  weatherImpacted: boolean;
+  reasonCodes: string[];
+  summaryNote: string | null;
+}
+
+export interface ActivitySummary {
+  totalDays: number;
+  activeDays: number;
+  inactiveDays: number;
+  unknownDays: number;
+  weatherImpactedDays: number;
+  rainDays: number;
+  snowDays: number;
 }
 
 export interface Alert {

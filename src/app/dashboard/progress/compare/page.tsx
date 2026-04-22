@@ -234,7 +234,7 @@ export default function ProgressComparePage() {
                     setSelectedDateB(latest);
                   }}
                 >
-                  Latest vs previous
+                  {t("comparePage.quickActions.latestVsPrevious")}
                 </Button>
                 <Button
                   variant="outline"
@@ -244,7 +244,7 @@ export default function ProgressComparePage() {
                     setSelectedDateB(sortedDates[sortedDates.length - 1] ?? "");
                   }}
                 >
-                  First vs latest
+                  {t("comparePage.quickActions.firstVsLatest")}
                 </Button>
                 <Button
                   variant="outline"
@@ -255,7 +255,7 @@ export default function ProgressComparePage() {
                   }}
                   disabled={!resolvedDateA || !resolvedDateB}
                 >
-                  Swap dates
+                  {t("comparePage.quickActions.swapDates")}
                 </Button>
               </div>
               <div className="space-y-2">

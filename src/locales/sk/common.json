@@ -257,7 +257,12 @@
     "changeActivityFell": "Index aktivity klesol z {{from}} na {{to}}.",
     "changeHours": "Aktívne hodiny sa posunuli z {{from}}h na {{to}}h.",
     "changeRiskSame": "Úroveň rizika zostala {{value}}.",
-    "changeRiskChanged": "Úroveň rizika sa zmenila z {{from}} na {{to}}."
+    "changeRiskChanged": "Úroveň rizika sa zmenila z {{from}} na {{to}}.",
+    "quickActions": {
+      "latestVsPrevious": "Najnovšia vs predchádzajúca",
+      "firstVsLatest": "Prvá vs najnovšia",
+      "swapDates": "Vymeniť dátumy"
+    }
   },
   "timelinePage": {
     "title": "Časová os stavby",
@@ -267,6 +272,7 @@
     "dateSelect": "Dátum snímky",
     "availableCaptures": "Dostupné snímky",
     "scrubbingHint": "Na pohyb v sekvencii použite výber týždňa, dátumu alebo posuvník nižšie.",
+    "keyboardHelp": "Po zameraní prehliadača použite šípky doľava a doprava na pohyb medzi snímkami. Medzerníkom spustíte alebo pozastavíte prehrávanie.",
     "previousDate": "Predchádzajúci dátum",
     "nextDate": "Nasledujúci dátum",
     "play": "Prehrať",
@@ -284,7 +290,13 @@
     "generate": "Vygenerovať report",
     "generating": "Generujem...",
     "generationFailed": "Generovanie zlyhalo",
+    "temporarilyDisabled": "Táto funkcia je dočasne vypnutá",
     "analyzing": "Analyzujem fotografie stavby pomocou GPT-4o Vision. Môže to trvať 30 až 60 sekúnd...",
+    "quickActions": {
+      "latestDay": "Najnovší deň",
+      "last7Captures": "Posledných 7 snímok",
+      "fullRange": "Celý rozsah"
+    },
     "history": "História reportov",
     "fallbackSummary": "Report postupu",
     "photosAnalyzed": "Analyzovaných fotografií: {{count}}",

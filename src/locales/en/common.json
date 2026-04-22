@@ -257,7 +257,12 @@
     "changeActivityFell": "Activity index fell from {{from}} to {{to}}.",
     "changeHours": "Active hours shifted from {{from}}h to {{to}}h.",
     "changeRiskSame": "Risk level remained {{value}}.",
-    "changeRiskChanged": "Risk level changed from {{from}} to {{to}}."
+    "changeRiskChanged": "Risk level changed from {{from}} to {{to}}.",
+    "quickActions": {
+      "latestVsPrevious": "Latest vs previous",
+      "firstVsLatest": "First vs latest",
+      "swapDates": "Swap dates"
+    }
   },
   "timelinePage": {
     "title": "Site timeline",
@@ -267,6 +272,7 @@
     "dateSelect": "Capture date",
     "availableCaptures": "Available captures",
     "scrubbingHint": "Use the week and date dropdowns or the range slider to move through the image sequence.",
+    "keyboardHelp": "Focus the viewer and use Left and Right arrows to move between captures. Press Space to play or pause.",
     "previousDate": "Previous date",
     "nextDate": "Next date",
     "play": "Play",
@@ -286,7 +292,13 @@
     "generate": "Generate analysis",
     "generating": "Generating...",
     "generationFailed": "Generation failed",
+    "temporarilyDisabled": "This feature is temporarily disabled",
     "analyzing": "Analyzing site photos with GPT-4o Vision. This may take 30-60 seconds...",
+    "quickActions": {
+      "latestDay": "Latest day",
+      "last7Captures": "Last 7 captures",
+      "fullRange": "Full range"
+    },
     "history": "Report history",
     "noReportsTitle": "No reports yet",
     "noReportsDescription": "Daily briefings, weekly summaries, and custom analyses will appear here once generated.",

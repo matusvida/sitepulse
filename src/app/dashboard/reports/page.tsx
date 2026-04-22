@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import { useProject } from "@/lib/project-context";
 import { fetchReport, fetchReports, fetchSnapshotDates, generateReport } from "@/lib/api";
@@ -23,11 +23,15 @@ import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
+import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
 import type { ProgressReport, ProgressReportType, ReportEvidenceImage } from "@/lib/types";
 import {
   ArrowUpRight,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   FileText,
   Image as ImageIcon,
@@ -62,6 +66,8 @@ export default function ReportsPage() {
   const [genError, setGenError] = useState<string | null>(null);
   const [activeReport, setActiveReport] = useState<ProgressReport | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [selectedEvidenceIndex, setSelectedEvidenceIndex] = useState<number | null>(null);
+  const evidenceScrollerRef = useRef<HTMLDivElement>(null);
 
   const effectiveFrom = dateFrom || sortedDates[0] || "";
   const effectiveTo = dateTo || sortedDates[sortedDates.length - 1] || "";
@@ -73,6 +79,7 @@ export default function ReportsPage() {
       try {
         const detail = await fetchReport(currentProject.id, reportId);
         setActiveReport(detail);
+        setSelectedEvidenceIndex(null);
       } finally {
         setLoadingDetail(false);
       }
@@ -188,6 +195,8 @@ export default function ReportsPage() {
   const activeConfidenceLabel = activeReport ? getConfidenceLabel(activeReport, t) : null;
   const activeEvidenceImageCount = activeReport ? getEvidenceImageCount(activeReport) : null;
   const activeEvidenceImages = activeReport?.evidenceImages ?? [];
+  const selectedEvidenceImage =
+    selectedEvidenceIndex != null ? activeEvidenceImages[selectedEvidenceIndex] ?? null : null;
 
   const getEvidenceLabel = useCallback(
     (image: ReportEvidenceImage, index: number) => {
@@ -202,6 +211,16 @@ export default function ReportsPage() {
     [t],
   );
 
+  const scrollEvidence = useCallback((direction: "left" | "right") => {
+    const scroller = evidenceScrollerRef.current;
+    if (!scroller) return;
+    const distance = Math.max(scroller.clientWidth * 0.75, 280);
+    scroller.scrollBy({
+      left: direction === "right" ? distance : -distance,
+      behavior: "smooth",
+    });
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -209,13 +228,13 @@ export default function ReportsPage() {
         <p className="mt-1 text-sm text-muted">{t("reportsPage.description")}</p>
       </div>
 
-      <Card>
+      <Card className="relative z-20">
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           {t("reportsPage.generateTitle")}
+          <HelpTooltip content={t("reportsPage.generateDescription")} />
         </CardTitle>
         <CardContent className="mt-4">
-          <p className="mb-4 max-w-2xl text-sm text-muted">{t("reportsPage.generateDescription")}</p>
           <div className="mb-4 flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -227,7 +246,7 @@ export default function ReportsPage() {
               }}
               disabled={sortedDates.length === 0}
             >
-              Latest day
+              {t("reportsPage.quickActions.latestDay")}
             </Button>
             <Button
               variant="outline"
@@ -240,7 +259,7 @@ export default function ReportsPage() {
               }}
               disabled={sortedDates.length === 0}
             >
-              Last 7 captures
+              {t("reportsPage.quickActions.last7Captures")}
             </Button>
             <Button
               variant="outline"
@@ -251,7 +270,7 @@ export default function ReportsPage() {
               }}
               disabled={sortedDates.length === 0}
             >
-              Full range
+              {t("reportsPage.quickActions.fullRange")}
             </Button>
           </div>
           <div className="flex flex-wrap items-end gap-4">
@@ -261,6 +280,7 @@ export default function ReportsPage() {
               options={dateOptions}
               value={effectiveFrom}
               onChange={(event) => setDateFrom(event.target.value)}
+              className="min-w-[180px]"
             />
             <Select
               id="date-to"
@@ -268,11 +288,25 @@ export default function ReportsPage() {
               options={dateOptions}
               value={effectiveTo}
               onChange={(event) => setDateTo(event.target.value)}
+              className="min-w-[180px]"
             />
-            <Button onClick={handleGenerate} disabled={generating || !effectiveFrom || !effectiveTo || invalidRange}>
-              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {generating ? t("reportsPage.generating") : t("reportsPage.generate")}
-            </Button>
+            <div className="group relative inline-flex">
+              <Button
+                onClick={handleGenerate}
+                disabled
+                aria-describedby="reports-generate-disabled-tip"
+              >
+                {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {generating ? t("reportsPage.generating") : t("reportsPage.generate")}
+              </Button>
+              <span
+                id="reports-generate-disabled-tip"
+                role="tooltip"
+                className="pointer-events-none absolute left-1/2 top-[calc(100%+0.6rem)] z-[110] w-max -translate-x-1/2 rounded-xl bg-slate-950 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.8)] transition-opacity duration-150 group-hover:opacity-100"
+              >
+                {t("reportsPage.temporarilyDisabled")}
+              </span>
+            </div>
           </div>
           {invalidRange ? (
             <p className="mt-3 text-sm text-amber-700">Start date must be on or before the end date.</p>
@@ -287,7 +321,7 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+      <div className="relative z-10 grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="space-y-4">
           {loadingList ? (
             <AsyncState type="loading" title={t("common.loading")} className="min-h-[180px]" />
@@ -394,28 +428,63 @@ export default function ReportsPage() {
                   <p className="mt-1 text-xs text-muted">
                     {t("reportsPage.evidenceSectionDescription")}
                   </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {activeEvidenceImages.map((image, index) => (
-                      <a
-                        key={`${image.url}-${index}`}
-                        href={image.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group rounded-[18px] border border-border/70 bg-background px-3 py-3 transition-colors hover:border-primary/40 hover:bg-primary/5"
+                  <div className="mt-4 flex items-center gap-3">
+                    {activeEvidenceImages.length > 1 ? (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 rounded-full"
+                        onClick={() => scrollEvidence("left")}
+                        aria-label="Scroll evidence images left"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground">
-                              {getEvidenceLabel(image, index)}
-                            </p>
-                            <p className="mt-1 line-clamp-2 break-all text-[11px] text-muted">
-                              {image.key || image.url}
-                            </p>
-                          </div>
-                          <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-primary" />
-                        </div>
-                      </a>
-                    ))}
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div
+                        ref={evidenceScrollerRef}
+                        className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      >
+                        {activeEvidenceImages.map((image, index) => (
+                          <button
+                            key={`${image.url}-${index}`}
+                            type="button"
+                            onClick={() => setSelectedEvidenceIndex(index)}
+                            className="group min-w-[220px] max-w-[220px] shrink-0 overflow-hidden rounded-[18px] border border-border/70 bg-background text-left transition-[border-color,background-color,transform,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_20px_44px_-30px_rgba(15,23,42,0.4)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                          >
+                            <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                              <img
+                                src={image.url}
+                                alt={getEvidenceLabel(image, index)}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                              />
+                            </div>
+                            <div className="flex items-start justify-between gap-3 px-3 py-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-foreground">
+                                  {getEvidenceLabel(image, index)}
+                                </p>
+                                <p className="mt-1 line-clamp-2 break-all text-[11px] text-muted">
+                                  {image.key || image.url}
+                                </p>
+                              </div>
+                              <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-primary" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {activeEvidenceImages.length > 1 ? (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 rounded-full"
+                        onClick={() => scrollEvidence("right")}
+                        aria-label="Scroll evidence images right"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -433,6 +502,28 @@ export default function ReportsPage() {
           )}
         </Card>
       </div>
+
+      <Modal
+        open={selectedEvidenceImage != null}
+        onClose={() => setSelectedEvidenceIndex(null)}
+        bare
+        hideHeader
+        showCloseButton
+        className="max-w-[96vw] max-h-[94vh]"
+      >
+        {selectedEvidenceImage ? (
+          <div className="relative overflow-hidden rounded-[18px]">
+            <div className="absolute left-3 top-3 z-10 rounded-full bg-slate-950/72 px-3 py-1.5 text-xs font-medium text-white shadow-[0_12px_28px_-18px_rgba(15,23,42,0.8)]">
+              {getEvidenceLabel(selectedEvidenceImage, selectedEvidenceIndex ?? 0)}
+            </div>
+            <img
+              src={selectedEvidenceImage.url}
+              alt={getEvidenceLabel(selectedEvidenceImage, selectedEvidenceIndex ?? 0)}
+              className="block max-h-[94vh] max-w-[96vw] h-auto w-auto object-contain"
+            />
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

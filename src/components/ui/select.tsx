@@ -274,7 +274,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {open ? (
             <div
               ref={panelRef}
-              className="absolute z-50 mt-2 max-h-72 w-full overflow-auto rounded-[24px] border border-white/80 bg-white/96 p-2 shadow-[0_26px_70px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl"
+              className="absolute z-[100] mt-2 max-h-72 w-full overflow-auto rounded-[24px] border border-white/80 bg-white/96 p-2 shadow-[0_26px_70px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl"
             >
               <div id={listboxId} role="listbox" aria-labelledby={label ? `${selectId}-label` : undefined}>
                 {options.map((option) => {

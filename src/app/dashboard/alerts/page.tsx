@@ -6,9 +6,10 @@ import { fetchAlerts, updateAlertStatus } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
 import { formatDateTime } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import type { Alert } from "@/lib/types";
@@ -163,8 +164,10 @@ export default function AlertsPage() {
 
       <Card>
         <CardHeader className="mb-0">
-          <CardTitle>{t("alertsPage.filterTitle")}</CardTitle>
-          <CardDescription>{t("alertsPage.filterDescription")}</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            {t("alertsPage.filterTitle")}
+            <HelpTooltip content={t("alertsPage.filterDescription")} />
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
           <Select

@@ -10,6 +10,7 @@ import { useTimelinePlayback } from "@/lib/use-timeline-playback";
 import { AsyncState } from "@/components/ui/async-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 import { Select } from "@/components/ui/select";
 import { ChevronLeft, ChevronRight, ImageOff, Loader2, Pause, Play } from "lucide-react";
 import type { SnapshotMetadata } from "@/lib/types";
@@ -424,7 +425,10 @@ export default function TimelinePage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t("timelinePage.title")}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            {t("timelinePage.title")}
+            <HelpTooltip content={t("timelinePage.scrubbingHint")} panelClassName="left-0 right-auto w-72" />
+          </CardTitle>
           <CardDescription>{t("timelinePage.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -432,8 +436,8 @@ export default function TimelinePage() {
             <AsyncState type="empty" title={t("timelinePage.empty")} className="min-h-[280px]" />
           ) : (
             <>
-              <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-                <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                <div className="grid gap-4 md:grid-cols-2 xl:flex-1">
                   <Select
                     id="timeline-week"
                     label={t("timelinePage.weekSelect")}
@@ -450,16 +454,13 @@ export default function TimelinePage() {
                   />
                 </div>
 
-                <div className="rounded-[24px] border border-white/80 bg-accent/50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                    {t("timelinePage.availableCaptures")}
-                  </p>
-                  <div className="mt-2 flex items-end justify-between gap-4">
-                    <p className="text-2xl font-semibold tracking-tight">{sortedDates.length}</p>
-                    <p className="max-w-[220px] text-right text-sm text-muted">
-                      {t("timelinePage.scrubbingHint")}
+                <div className="inline-flex items-center gap-3 self-start rounded-full border border-white/80 bg-accent/70 px-4 py-2.5 shadow-sm xl:self-auto">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                      {t("timelinePage.availableCaptures")}
                     </p>
                   </div>
+                  <p className="text-sm font-semibold tracking-tight text-foreground">{sortedDates.length}</p>
                 </div>
               </div>
 
@@ -506,10 +507,8 @@ export default function TimelinePage() {
                     aria-label={t("timelinePage.sliderAria")}
                   />
                 </div>
+                <HelpTooltip content={t("timelinePage.keyboardHelp")} panelClassName="right-0 w-72" />
               </div>
-              <p className="text-xs text-muted">
-                Focus the viewer and use Left and Right arrows to move between captures. Press Space to play or pause.
-              </p>
 
               <div
                 className="relative aspect-[21/9] w-full overflow-hidden rounded-[28px] border border-white/75 bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"

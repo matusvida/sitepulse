@@ -5,6 +5,8 @@ import { useProject } from "@/lib/project-context";
 import { fetchSnapshots, fetchWeeklyMetrics } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
+import { AsyncState } from "@/components/ui/async-state";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
@@ -18,7 +20,7 @@ function sortSnapshots(snapshots: SnapshotMetadata[]): SnapshotMetadata[] {
 export default function ProgressComparePage() {
   const { currentProject } = useProject();
   const { t } = useLanguage();
-  const { data: snapshots, loading } = useApi(
+  const { data: snapshots, loading, error, refetch } = useApi(
     () => fetchSnapshots(currentProject.id),
     [currentProject.id],
   );
@@ -54,6 +56,7 @@ export default function ProgressComparePage() {
 
   const snapshotA = sortedSnapshots.find((snapshot) => snapshot.date === resolvedDateA) ?? null;
   const snapshotB = sortedSnapshots.find((snapshot) => snapshot.date === resolvedDateB) ?? null;
+  const sameSelection = resolvedDateA !== "" && resolvedDateA === resolvedDateB;
 
   useEffect(() => {
     if (snapshotA?.url) {
@@ -158,10 +161,28 @@ export default function ProgressComparePage() {
   }, [metricsForDate, resolvedDateA, resolvedDateB, t]);
 
   if (loading) {
-    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
+    return (
+      <AsyncState
+        type="loading"
+        title={t("common.loading")}
+        description={t("comparePage.visualDescription")}
+      />
+    );
   }
 
   const hasData = sortedDates.length > 0;
+
+  if (error && !hasData) {
+    return (
+      <AsyncState
+        type="error"
+        title="Unable to load snapshots for comparison"
+        description={error}
+        actionLabel="Retry"
+        onAction={refetch}
+      />
+    );
+  }
 
   const placeholder = (label: string) => (
     <div className="flex h-full flex-col items-center justify-center gap-3 bg-accent/45 text-muted">
@@ -173,11 +194,11 @@ export default function ProgressComparePage() {
   return (
     <div className="space-y-6">
       {!hasData ? (
-        <Card className="p-10 text-center">
-          <ImageOff className="mx-auto h-8 w-8 text-muted/40" />
-          <p className="mt-3 text-sm font-medium text-foreground">{t("comparePage.noSnapshotsTitle")}</p>
-          <p className="mt-1 text-sm text-muted">{t("comparePage.noSnapshotsDescription")}</p>
-        </Card>
+        <AsyncState
+          type="empty"
+          title={t("comparePage.noSnapshotsTitle")}
+          description={t("comparePage.noSnapshotsDescription")}
+        />
       ) : (
         <>
           <Card className="relative z-20">
@@ -202,6 +223,41 @@ export default function ProgressComparePage() {
                   onChange={(event) => setSelectedDateB(event.target.value)}
                 />
               </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const previous = sortedDates[Math.max(sortedDates.length - 2, 0)] ?? "";
+                    const latest = sortedDates[sortedDates.length - 1] ?? "";
+                    setSelectedDateA(previous);
+                    setSelectedDateB(latest);
+                  }}
+                >
+                  Latest vs previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedDateA(sortedDates[0] ?? "");
+                    setSelectedDateB(sortedDates[sortedDates.length - 1] ?? "");
+                  }}
+                >
+                  First vs latest
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedDateA(resolvedDateB);
+                    setSelectedDateB(resolvedDateA);
+                  }}
+                  disabled={!resolvedDateA || !resolvedDateB}
+                >
+                  Swap dates
+                </Button>
+              </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-medium text-muted">
                   <span>{resolvedDateA}</span>
@@ -217,6 +273,11 @@ export default function ProgressComparePage() {
                   aria-label={t("comparePage.sliderAria")}
                 />
               </div>
+              {sameSelection ? (
+                <p className="text-sm text-amber-700">
+                  Choose two different dates to reveal a meaningful visual comparison.
+                </p>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -291,7 +352,7 @@ export default function ProgressComparePage() {
             </CardContent>
           </Card>
 
-          {detectedChanges.length > 0 ? (
+          {detectedChanges.length > 0 && !sameSelection ? (
             <Card>
               <CardHeader>
                 <CardTitle>{t("comparePage.metricChanges")}</CardTitle>

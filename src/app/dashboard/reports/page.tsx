@@ -18,6 +18,7 @@ import {
 } from "@/lib/report-utils";
 import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
+import { AsyncState } from "@/components/ui/async-state";
 import { formatDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,11 +40,11 @@ export default function ReportsPage() {
   const { currentProject } = useProject();
   const { t } = useLanguage();
 
-  const { data: dates } = useApi(
+  const { data: dates, error: datesError, refetch: refetchDates } = useApi(
     () => fetchSnapshotDates(currentProject.id),
     [currentProject.id],
   );
-  const { data: reports, loading: loadingList, refetch } = useApi(
+  const { data: reports, loading: loadingList, error: reportsError, refetch } = useApi(
     () => fetchReports(currentProject.id),
     [currentProject.id],
   );
@@ -64,6 +65,7 @@ export default function ReportsPage() {
 
   const effectiveFrom = dateFrom || sortedDates[0] || "";
   const effectiveTo = dateTo || sortedDates[sortedDates.length - 1] || "";
+  const invalidRange = Boolean(effectiveFrom && effectiveTo && effectiveFrom > effectiveTo);
 
   const handleViewReport = useCallback(
     async (reportId: number) => {
@@ -101,7 +103,7 @@ export default function ReportsPage() {
   }, [activeReport, handleViewReport, reports]);
 
   const handleGenerate = useCallback(async () => {
-    if (!effectiveFrom || !effectiveTo) {
+    if (!effectiveFrom || !effectiveTo || invalidRange) {
       return;
     }
 
@@ -116,7 +118,7 @@ export default function ReportsPage() {
     } finally {
       setGenerating(false);
     }
-  }, [currentProject.id, effectiveFrom, effectiveTo, refetch, t]);
+  }, [currentProject.id, effectiveFrom, effectiveTo, invalidRange, refetch, t]);
 
   const renderReportSection = useCallback(
     (type: ProgressReportType, items: ProgressReport[]) => (
@@ -214,6 +216,44 @@ export default function ReportsPage() {
         </CardTitle>
         <CardContent className="mt-4">
           <p className="mb-4 max-w-2xl text-sm text-muted">{t("reportsPage.generateDescription")}</p>
+          <div className="mb-4 flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const latest = sortedDates[sortedDates.length - 1] ?? "";
+                setDateFrom(latest);
+                setDateTo(latest);
+              }}
+              disabled={sortedDates.length === 0}
+            >
+              Latest day
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const to = sortedDates[sortedDates.length - 1] ?? "";
+                const from = sortedDates[Math.max(sortedDates.length - 7, 0)] ?? to;
+                setDateFrom(from);
+                setDateTo(to);
+              }}
+              disabled={sortedDates.length === 0}
+            >
+              Last 7 captures
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setDateFrom(sortedDates[0] ?? "");
+                setDateTo(sortedDates[sortedDates.length - 1] ?? "");
+              }}
+              disabled={sortedDates.length === 0}
+            >
+              Full range
+            </Button>
+          </div>
           <div className="flex flex-wrap items-end gap-4">
             <Select
               id="date-from"
@@ -229,29 +269,47 @@ export default function ReportsPage() {
               value={effectiveTo}
               onChange={(event) => setDateTo(event.target.value)}
             />
-            <Button onClick={handleGenerate} disabled={generating || !effectiveFrom || !effectiveTo}>
+            <Button onClick={handleGenerate} disabled={generating || !effectiveFrom || !effectiveTo || invalidRange}>
               {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               {generating ? t("reportsPage.generating") : t("reportsPage.generate")}
             </Button>
           </div>
+          {invalidRange ? (
+            <p className="mt-3 text-sm text-amber-700">Start date must be on or before the end date.</p>
+          ) : null}
           {genError ? <p className="mt-3 text-sm text-destructive">{genError}</p> : null}
           {generating ? <p className="mt-3 text-sm text-muted">{t("reportsPage.analyzing")}</p> : null}
+          {datesError ? (
+            <p className="mt-3 text-sm text-amber-700">
+              Snapshot dates are unavailable right now. Refresh to retry before generating a report.
+            </p>
+          ) : null}
         </CardContent>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="space-y-4">
           {loadingList ? (
-            <Card className="py-8 text-center">
-              <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin text-muted" />
-              <p className="text-sm text-muted">{t("common.loading")}</p>
-            </Card>
+            <AsyncState type="loading" title={t("common.loading")} className="min-h-[180px]" />
+          ) : reportsError && (!reports || reports.length === 0) ? (
+            <AsyncState
+              type="error"
+              title="Unable to load reports"
+              description={reportsError}
+              actionLabel="Retry"
+              onAction={() => {
+                refetch();
+                refetchDates();
+              }}
+              className="min-h-[180px]"
+            />
           ) : !reports || reports.length === 0 ? (
-            <Card className="py-8 text-center">
-              <FileText className="mx-auto mb-3 h-8 w-8 text-muted opacity-30" />
-              <p className="text-sm text-foreground">{t("reportsPage.noReportsTitle")}</p>
-              <p className="mt-1 text-xs text-muted">{t("reportsPage.noReportsDescription")}</p>
-            </Card>
+            <AsyncState
+              type="empty"
+              title={t("reportsPage.noReportsTitle")}
+              description={t("reportsPage.noReportsDescription")}
+              className="min-h-[180px]"
+            />
           ) : (
             <>
               {renderReportSection("daily", groupedReports.daily)}

@@ -5,6 +5,7 @@ import { useProject } from "@/lib/project-context";
 import { fetchWeeklyMetrics } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
+import { AsyncState } from "@/components/ui/async-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartWrapper } from "@/components/charts/chart-wrapper";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +26,7 @@ const timeframeWeeks: Record<Timeframe, number> = { "4w": 4, "12w": 12, "26w": 2
 export default function ProgressPage() {
   const { currentProject } = useProject();
   const { t } = useLanguage();
-  const { data: weekly, loading } = useApi(
+  const { data: weekly, loading, error, refetch } = useApi(
     () => fetchWeeklyMetrics(currentProject.id, 26),
     [currentProject.id],
   );
@@ -55,7 +56,25 @@ export default function ProgressPage() {
   }, [chartData]);
 
   if (loading || !weekly) {
-    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
+    if (error && !weekly) {
+      return (
+        <AsyncState
+          type="error"
+          title="Unable to load progress metrics"
+          description={error}
+          actionLabel="Retry"
+          onAction={refetch}
+        />
+      );
+    }
+
+    return (
+      <AsyncState
+        type="loading"
+        title={t("common.loading")}
+        description={t("progressPage.description")}
+      />
+    );
   }
 
   const averageLine = summary ? Math.round(summary.averageDelta * 10) / 10 : 0;

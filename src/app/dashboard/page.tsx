@@ -14,6 +14,7 @@ import {
   groupReportsByType,
 } from "@/lib/report-utils";
 import { useApi } from "@/lib/use-api";
+import { AsyncState } from "@/components/ui/async-state";
 import { formatDateTime, timeAgo } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -51,7 +52,7 @@ export default function OverviewPage() {
   const { currentProject } = useProject();
   const { t } = useLanguage();
 
-  const { data: weekly, loading: loadingWeekly } = useApi(
+  const { data: weekly, loading: loadingWeekly, error: weeklyError, refetch: refetchWeekly } = useApi(
     () => fetchWeeklyMetrics(currentProject.id, 26),
     [currentProject.id],
   );
@@ -59,7 +60,7 @@ export default function OverviewPage() {
     () => fetchAlerts(currentProject.id),
     [currentProject.id],
   );
-  const { data: activitySummary, loading: loadingActivitySummary } = useApi(
+  const { data: activitySummary, loading: loadingActivitySummary, error: activityError } = useApi(
     () => fetchActivitySummary(currentProject.id, 28),
     [currentProject.id],
   );
@@ -97,12 +98,30 @@ export default function OverviewPage() {
   }, [planData]);
 
   if (loadingWeekly || loadingAlerts || loadingActivitySummary || !weekly || !alerts || !activitySummary) {
-    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
+    if (weeklyError || activityError) {
+      return (
+        <AsyncState
+          type="error"
+          title="Unable to load overview metrics"
+          description={weeklyError ?? activityError ?? undefined}
+          actionLabel="Retry"
+          onAction={refetchWeekly}
+        />
+      );
+    }
+
+    return (
+      <AsyncState
+        type="loading"
+        title={t("common.loading")}
+        description={t("overview.heroDescription")}
+      />
+    );
   }
 
   const latest = weekly[weekly.length - 1];
   if (!latest) {
-    return <div className="py-12 text-center text-muted">{t("overview.noMetrics")}</div>;
+    return <AsyncState type="empty" title={t("overview.noMetrics")} />;
   }
 
   const chartData = weekly.slice(-12);

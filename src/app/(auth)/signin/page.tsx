@@ -46,7 +46,7 @@ export default function SignInPage() {
               id="password"
               label="Password"
               type="password"
-              placeholder="••••••••"
+              placeholder="........"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -65,7 +65,7 @@ export default function SignInPage() {
 
       <footer className="border-t border-white/70 py-4 text-center text-xs text-muted">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 sm:flex-row">
-          <p>© 2026 SitePulse. Construction monitoring workspace.</p>
+          <p>(c) 2026 SitePulse. Construction monitoring workspace.</p>
           <div className="flex items-center gap-2">
             <span className="rounded-full bg-white/75 px-3 py-1 text-foreground/80">Privacy</span>
             <span className="rounded-full bg-white/75 px-3 py-1 text-foreground/80">Terms</span>

@@ -66,19 +66,19 @@ function DashboardFooter() {
             <LifeBuoy className="h-3.5 w-3.5" />
             {t("shell.support")}
           </span>
-          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80 cursor-default">
             {t("shell.helpLink")}
           </span>
-          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80 cursor-default">
             {t("shell.docsLink")}
           </span>
-          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80 cursor-default">
             {t("shell.footerPrivacy")}
           </span>
-          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80 cursor-default">
             {t("shell.footerTerms")}
           </span>
-          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80">
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-foreground/80 cursor-default">
             {t("shell.footerStatus")}
           </span>
         </div>

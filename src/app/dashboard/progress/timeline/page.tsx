@@ -7,6 +7,7 @@ import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
 import { useImagePreloader } from "@/lib/use-image-preloader";
 import { useTimelinePlayback } from "@/lib/use-timeline-playback";
+import { AsyncState } from "@/components/ui/async-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
@@ -191,7 +192,7 @@ function SnapshotViewer({
 export default function TimelinePage() {
   const { currentProject } = useProject();
   const { t } = useLanguage();
-  const { data: snapshots, loading, refetch: refetchSnapshots } = useApi(
+  const { data: snapshots, loading, error, refetch: refetchSnapshots } = useApi(
     () => fetchSnapshots(currentProject.id),
     [currentProject.id],
   );
@@ -252,25 +253,19 @@ export default function TimelinePage() {
 
   const activeWeek = activeWeekIndex >= 0 ? weeks[activeWeekIndex] : weeks[weeks.length - 1];
 
-  const weekOptions = useMemo(
-    () =>
-      weeks.map((week) => ({
-        value: week.id,
-        label: `${t("timelinePage.weekLabel", { count: week.label })} · ${formatShortDate(week.dates[0].date)} - ${formatShortDate(
-          week.dates[week.dates.length - 1].date,
-        )}`,
-      })),
-    [t, weeks],
-  );
+  const weekOptions = useMemo(() => {
+    return weeks.map((week) => ({
+      value: week.id,
+      label: `${t("timelinePage.weekLabel", { count: week.label })} - ${formatShortDate(week.dates[0].date)} to ${formatShortDate(week.dates[week.dates.length - 1].date)}`,
+    }));
+  }, [t, weeks]);
 
-  const dateOptions = useMemo(
-    () =>
-      (activeWeek?.dates ?? []).map((entry) => ({
-        value: entry.date,
-        label: `${entry.date} · ${formatShortDate(entry.date)}`,
-      })),
-    [activeWeek],
-  );
+  const dateOptions = useMemo(() => {
+    return (activeWeek?.dates ?? []).map((entry) => ({
+      value: entry.date,
+      label: `${entry.date} - ${formatShortDate(entry.date)}`,
+    }));
+  }, [activeWeek]);
 
   const { waitForImage, isReady } = useImagePreloader(allUrls, activeDateIdx, isPlayMode);
 
@@ -401,29 +396,29 @@ export default function TimelinePage() {
     };
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        handlePrev();
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        handleNext();
-      } else if (event.key === " ") {
-        event.preventDefault();
-        togglePlay();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNext, handlePrev, togglePlay]);
-
   if (loading) {
-    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
+    return (
+      <AsyncState
+        type="loading"
+        title={t("common.loading")}
+        description={t("timelinePage.description")}
+      />
+    );
   }
 
   const hasData = sortedDates.length > 0;
+
+  if (error && !hasData) {
+    return (
+      <AsyncState
+        type="error"
+        title="Unable to load timeline snapshots"
+        description={error}
+        actionLabel="Retry"
+        onAction={refetchSnapshots}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -434,9 +429,7 @@ export default function TimelinePage() {
         </CardHeader>
         <CardContent className="space-y-5">
           {!hasData ? (
-            <div className="flex aspect-video items-center justify-center rounded-[24px] border border-border/80 bg-accent/50 text-sm text-muted">
-              {t("timelinePage.empty")}
-            </div>
+            <AsyncState type="empty" title={t("timelinePage.empty")} className="min-h-[280px]" />
           ) : (
             <>
               <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
@@ -471,13 +464,31 @@ export default function TimelinePage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <Button variant="outline" size="icon" onClick={handlePrev} disabled={activeDateIdx <= 0 || playing}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrev}
+                  disabled={activeDateIdx <= 0 || playing}
+                  aria-label="Previous capture"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                <Button variant={playing ? "secondary" : "primary"} size="icon" onClick={togglePlay} disabled={sortedDates.length < 2}>
+                <Button
+                  variant={playing ? "secondary" : "primary"}
+                  size="icon"
+                  onClick={togglePlay}
+                  disabled={sortedDates.length < 2}
+                  aria-label={playing ? "Pause playback" : "Start playback"}
+                >
                   {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
-                <Button variant="outline" size="icon" onClick={handleNext} disabled={activeDateIdx >= sortedDates.length - 1 || playing}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNext}
+                  disabled={activeDateIdx >= sortedDates.length - 1 || playing}
+                  aria-label="Next capture"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
                 <div className="min-w-0 flex-1">
@@ -496,8 +507,28 @@ export default function TimelinePage() {
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted">
+                Focus the viewer and use Left and Right arrows to move between captures. Press Space to play or pause.
+              </p>
 
-              <div className="relative aspect-[21/9] w-full overflow-hidden rounded-[28px] border border-white/75 bg-slate-100">
+              <div
+                className="relative aspect-[21/9] w-full overflow-hidden rounded-[28px] border border-white/75 bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                tabIndex={0}
+                role="region"
+                aria-label="Timeline image viewer"
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    handlePrev();
+                  } else if (event.key === "ArrowRight") {
+                    event.preventDefault();
+                    handleNext();
+                  } else if (event.key === " ") {
+                    event.preventDefault();
+                    togglePlay();
+                  }
+                }}
+              >
                 {activeDate && !imgError ? (
                   <SnapshotViewer
                     currentUrl={activeUrl}

@@ -5,6 +5,7 @@ import { useProject } from "@/lib/project-context";
 import { fetchPlan, uploadPlan, triggerPlanCheck } from "@/lib/api";
 import { useApi } from "@/lib/use-api";
 import { useLanguage } from "@/lib/language-context";
+import { AsyncState } from "@/components/ui/async-state";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +42,7 @@ export default function PlanPage() {
   const [checkError, setCheckError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  const { data, loading, refetch } = useApi(
+  const { data, loading, error, refetch } = useApi(
     () => fetchPlan(currentProject.id),
     [currentProject.id],
   );
@@ -95,7 +96,25 @@ export default function PlanPage() {
   }, [currentProject.id, refetch, t]);
 
   if (loading) {
-    return <div className="py-12 text-center text-muted">{t("common.loading")}</div>;
+    return (
+      <AsyncState
+        type="loading"
+        title={t("common.loading")}
+        description={t("planPage.description")}
+      />
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <AsyncState
+        type="error"
+        title="Unable to load construction plan data"
+        description={error}
+        actionLabel="Retry"
+        onAction={refetch}
+      />
+    );
   }
 
   const plan = data?.plan;
@@ -210,11 +229,11 @@ export default function PlanPage() {
       </div>
 
       {milestones.length === 0 ? (
-        <Card className="p-10 text-center">
-          <FileText className="mx-auto h-8 w-8 text-muted/40" />
-          <p className="mt-3 text-sm font-medium text-foreground">{t("planPage.noMilestonesTitle")}</p>
-          <p className="mt-1 text-sm text-muted">{t("planPage.noMilestonesDescription")}</p>
-        </Card>
+        <AsyncState
+          type="empty"
+          title={t("planPage.noMilestonesTitle")}
+          description={t("planPage.noMilestonesDescription")}
+        />
       ) : (
         <>
           <div className="grid gap-4 lg:hidden">

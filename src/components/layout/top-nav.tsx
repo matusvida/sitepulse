@@ -3,8 +3,8 @@
 import { useProject } from "@/lib/project-context";
 import { useLanguage } from "@/lib/language-context";
 import { formatDateTime } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Camera, Languages, LayoutGrid, MapPin, Menu, User } from "lucide-react";
+import { Toggle } from "@/components/ui/toggle";
+import { Camera, LayoutGrid, MapPin, Menu, User } from "lucide-react";
 
 interface TopNavProps {
   onMenuToggle: () => void;
@@ -63,18 +63,21 @@ export function TopNav({ onMenuToggle }: TopNavProps) {
           <div className="hidden rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-foreground sm:block xl:hidden">
             {currentProject.name}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleLocale}
-            aria-label={t("topNav.switchLanguage")}
-            className="h-9 rounded-xl px-3 text-xs xl:h-10 xl:text-sm"
+          <Toggle
+            variant="segmented"
+            checked={locale === "sk"}
+            onChange={() => toggleLocale()}
+            ariaLabel={t("topNav.switchLanguage")}
+            uncheckedLabel="EN"
+            checkedLabel="SK"
+            className="h-9 xl:h-10"
+          />
+          <div
+            className="flex h-9 min-w-9 items-center justify-center rounded-full border border-white/80 bg-white/80 px-2 shadow-sm xl:h-10"
+            aria-label="Workspace avatar"
           >
-            <Languages className="h-4 w-4" />
-            {locale === "en" ? "SK" : "EN"}
-          </Button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/80 shadow-sm xl:h-10 xl:w-10">
             <User className="h-4 w-4 text-muted" />
+            <span className="sr-only">Workspace avatar</span>
           </div>
         </div>
       </div>

@@ -21,7 +21,7 @@ export default function ProgressLayout({ children }: { children: React.ReactNode
         <h1 className="text-xl font-semibold">{t("progressLayout.title")}</h1>
       </div>
 
-      <nav className="flex gap-1 border-b pb-px">
+      <nav className="inline-flex flex-wrap gap-1 rounded-[22px] border border-white/80 bg-white/80 p-1 shadow-[0_12px_32px_-24px_rgba(15,23,42,0.45)] backdrop-blur-sm">
         {tabs.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -30,17 +30,14 @@ export default function ProgressLayout({ children }: { children: React.ReactNode
               href={href}
               prefetch
               className={cn(
-                "relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors",
+                "relative flex items-center gap-2 rounded-2xl px-3.5 py-2 text-sm font-medium transition-[background-color,color,box-shadow]",
                 active
-                  ? "text-primary"
-                  : "text-muted hover:text-foreground",
+                  ? "border border-primary/15 bg-primary/10 text-primary shadow-[0_14px_28px_-24px_rgba(29,95,209,0.28)]"
+                  : "text-muted hover:bg-accent hover:text-foreground",
               )}
             >
               <Icon className="h-3.5 w-3.5" />
               {label}
-              {active && (
-                <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-primary" />
-              )}
             </Link>
           );
         })}

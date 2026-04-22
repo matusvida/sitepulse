@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useProject } from "@/lib/project-context";
 import { updateProject } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
+import { AsyncState } from "@/components/ui/async-state";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -24,11 +25,14 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const unsupportedHint = "Read-only for now. The current backend only saves project name and location.";
 
   useEffect(() => {
     setProjectName(currentProject.name);
     setLocation(currentProject.location);
     setCoverage(String(currentProject.coveragePercent));
+    setSaved(false);
+    setError(null);
   }, [currentProject]);
 
   const handleSave = useCallback(async () => {
@@ -64,6 +68,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-semibold">{t("settingsPage.title")}</h1>
+      <AsyncState
+        type="empty"
+        title="Only project profile settings are editable today"
+        description="Monitoring and notification preferences are visible, but the current backend does not persist changes to those fields yet."
+        className="min-h-[140px] items-start text-left"
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -89,6 +99,8 @@ export default function SettingsPage() {
               max={100}
               value={coverage}
               onChange={(event) => setCoverage(event.target.value)}
+              disabled
+              hint={unsupportedHint}
             />
           </CardContent>
         </Card>
@@ -102,6 +114,8 @@ export default function SettingsPage() {
               options={intervalOptions}
               value={snapshotInterval}
               onChange={(event) => setSnapshotInterval(event.target.value)}
+              disabled
+              hint={unsupportedHint}
             />
             <div className="grid grid-cols-2 gap-3">
               <Input
@@ -110,6 +124,7 @@ export default function SettingsPage() {
                 type="time"
                 value={workStart}
                 onChange={(event) => setWorkStart(event.target.value)}
+                disabled
               />
               <Input
                 id="work-end"
@@ -117,8 +132,10 @@ export default function SettingsPage() {
                 type="time"
                 value={workEnd}
                 onChange={(event) => setWorkEnd(event.target.value)}
+                disabled
               />
             </div>
+            <p className="text-xs text-muted">{unsupportedHint}</p>
           </CardContent>
         </Card>
 
@@ -132,6 +149,8 @@ export default function SettingsPage() {
               placeholder="alerts@company.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              disabled
+              hint={unsupportedHint}
             />
             <p className="text-xs text-muted">{t("settingsPage.notificationHelp")}</p>
           </CardContent>

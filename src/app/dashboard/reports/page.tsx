@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Markdown from "react-markdown";
 import { useProject } from "@/lib/project-context";
 import { fetchReport, fetchReports, fetchSnapshotDates, generateReport } from "@/lib/api";
@@ -67,7 +67,8 @@ export default function ReportsPage() {
   const [activeReport, setActiveReport] = useState<ProgressReport | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [selectedEvidenceIndex, setSelectedEvidenceIndex] = useState<number | null>(null);
-  const evidenceScrollerRef = useRef<HTMLDivElement>(null);
+  const [evidenceStartIndex, setEvidenceStartIndex] = useState(0);
+  const [visibleEvidenceCount, setVisibleEvidenceCount] = useState(3);
 
   const effectiveFrom = dateFrom || sortedDates[0] || "";
   const effectiveTo = dateTo || sortedDates[sortedDates.length - 1] || "";
@@ -80,6 +81,7 @@ export default function ReportsPage() {
         const detail = await fetchReport(currentProject.id, reportId);
         setActiveReport(detail);
         setSelectedEvidenceIndex(null);
+        setEvidenceStartIndex(0);
       } finally {
         setLoadingDetail(false);
       }
@@ -194,7 +196,15 @@ export default function ReportsPage() {
 
   const activeConfidenceLabel = activeReport ? getConfidenceLabel(activeReport, t) : null;
   const activeEvidenceImageCount = activeReport ? getEvidenceImageCount(activeReport) : null;
-  const activeEvidenceImages = activeReport?.evidenceImages ?? [];
+  const activeEvidenceImages = useMemo(
+    () =>
+      (activeReport?.evidenceImages ?? []).slice().sort((left, right) => {
+        const leftValue = left.capturedAt ?? left.date ?? "";
+        const rightValue = right.capturedAt ?? right.date ?? "";
+        return leftValue.localeCompare(rightValue);
+      }),
+    [activeReport?.evidenceImages],
+  );
   const selectedEvidenceImage =
     selectedEvidenceIndex != null ? activeEvidenceImages[selectedEvidenceIndex] ?? null : null;
 
@@ -211,15 +221,28 @@ export default function ReportsPage() {
     [t],
   );
 
-  const scrollEvidence = useCallback((direction: "left" | "right") => {
-    const scroller = evidenceScrollerRef.current;
-    if (!scroller) return;
-    const distance = Math.max(scroller.clientWidth * 0.75, 280);
-    scroller.scrollBy({
-      left: direction === "right" ? distance : -distance,
-      behavior: "smooth",
-    });
+  useEffect(() => {
+    const updateVisibleEvidenceCount = () => {
+      setVisibleEvidenceCount(window.innerWidth >= 1680 ? 4 : 3);
+    };
+
+    updateVisibleEvidenceCount();
+    window.addEventListener("resize", updateVisibleEvidenceCount);
+    return () => window.removeEventListener("resize", updateVisibleEvidenceCount);
   }, []);
+
+  useEffect(() => {
+    const maxStart = Math.max(0, activeEvidenceImages.length - visibleEvidenceCount);
+    setEvidenceStartIndex((current) => Math.min(current, maxStart));
+  }, [activeEvidenceImages.length, visibleEvidenceCount]);
+
+  const visibleEvidenceImages = useMemo(
+    () => activeEvidenceImages.slice(evidenceStartIndex, evidenceStartIndex + visibleEvidenceCount),
+    [activeEvidenceImages, evidenceStartIndex, visibleEvidenceCount],
+  );
+
+  const canScrollEvidenceLeft = evidenceStartIndex > 0;
+  const canScrollEvidenceRight = evidenceStartIndex + visibleEvidenceCount < activeEvidenceImages.length;
 
   return (
     <div className="space-y-6">
@@ -428,24 +451,24 @@ export default function ReportsPage() {
                   <p className="mt-1 text-xs text-muted">
                     {t("reportsPage.evidenceSectionDescription")}
                   </p>
-                  <div className="mt-4 flex items-center gap-3">
+                  <div className="relative mx-auto mt-4 w-fit max-w-full">
                     {activeEvidenceImages.length > 1 ? (
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9 shrink-0 rounded-full"
-                        onClick={() => scrollEvidence("left")}
+                        className="absolute left-0 top-1/2 z-10 h-9 w-9 -translate-x-[calc(100%+0.75rem)] -translate-y-1/2 rounded-full"
+                        onClick={() => setEvidenceStartIndex((current) => Math.max(0, current - 1))}
+                        disabled={!canScrollEvidenceLeft}
                         aria-label="Scroll evidence images left"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                     ) : null}
-                    <div className="min-w-0 flex-1 overflow-hidden">
-                      <div
-                        ref={evidenceScrollerRef}
-                        className="flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                      >
-                        {activeEvidenceImages.map((image, index) => (
+                    <div className="w-[684px] max-w-full overflow-hidden xl:w-[916px]">
+                      <div className="flex gap-3">
+                        {visibleEvidenceImages.map((image, visibleIndex) => {
+                          const index = evidenceStartIndex + visibleIndex;
+                          return (
                           <button
                             key={`${image.url}-${index}`}
                             type="button"
@@ -471,15 +494,21 @@ export default function ReportsPage() {
                               <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-primary" />
                             </div>
                           </button>
-                        ))}
+                        );
+                        })}
                       </div>
                     </div>
                     {activeEvidenceImages.length > 1 ? (
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9 shrink-0 rounded-full"
-                        onClick={() => scrollEvidence("right")}
+                        className="absolute right-0 top-1/2 z-10 h-9 w-9 translate-x-[calc(100%+0.75rem)] -translate-y-1/2 rounded-full"
+                        onClick={() =>
+                          setEvidenceStartIndex((current) =>
+                            Math.min(activeEvidenceImages.length - visibleEvidenceCount, current + 1),
+                          )
+                        }
+                        disabled={!canScrollEvidenceRight}
                         aria-label="Scroll evidence images right"
                       >
                         <ChevronRight className="h-4 w-4" />

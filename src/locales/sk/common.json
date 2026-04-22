@@ -13,7 +13,7 @@
     "toggleSidebar": "Prepnúť bočný panel",
     "selectProject": "Výber projektu",
     "switchLanguage": "Prepnúť jazyk",
-    "brandCaption": "Construction inteligence",
+    "brandCaption": "Construction intelligence",
     "lastCapture": "Posledná snímka",
     "cameraCount": "{{count}} kamier"
   },
@@ -123,14 +123,14 @@
     "recentFlagsTitle": "Nedávne hlásenia",
     "recentFlagsDescription": "Najnovšie signály zo sledovania harmonogramu, bezpečnosti, anomálií a počasia.",
     "noRecentFlags": "Pre tento projekt nie sú žiadne nedávne hlásenia.",
-    "latestDailyBriefingTitle": "Posledn? denn? preh?ad",
-    "latestDailyBriefingDescription": "Najnov?? operat?vny koment?r k posledn?mu pozorovan?mu d?u.",
-    "latestWeeklyInsightTitle": "Posledn? t??denn? poh?ad",
-    "latestWeeklyInsightDescription": "Textov? kontext k najnov?iemu t??denn?mu sign?lu postupu.",
-    "openReport": "Otvori? report",
-    "generatedAt": "Vygenerovan? {{date}}",
-    "noNarrativeTitle": "Zatia? nie je dostupn? AI koment?r",
-    "noNarrativeDescription": "Denn? a t??denn? AI reporty sa zobrazia po ich vygenerovan? pre tento projekt."
+    "latestDailyBriefingTitle": "Posledný denný prehľad",
+    "latestDailyBriefingDescription": "Najnovší operatívny komentár k poslednému pozorovanému dňu.",
+    "latestWeeklyInsightTitle": "Posledný týždenný pohľad",
+    "latestWeeklyInsightDescription": "Textový kontext k najnovšiemu týždennému signálu postupu.",
+    "openReport": "Otvoriť report",
+    "generatedAt": "Vygenerované {{date}}",
+    "noNarrativeTitle": "Zatiaľ nie je dostupný AI komentár",
+    "noNarrativeDescription": "Denné a týždenné AI reporty sa zobrazia po ich vygenerovaní pre tento projekt."
   },
   "alertsPage": {
     "title": "Upozornenia",
@@ -232,7 +232,7 @@
     "latestDelta": "Najnovšia delta",
     "comparedAgainst": "Porovnané s {{count}} týždňami historického vývoja.",
     "activityIndex": "Index aktivity",
-    "activityIndexDescription": "Použite ho na odhalenie nízkeho využitia alebo prudkého nárastu pohybu.",
+    "activityIndexDescription": "Použite ho na odhalenie nízkeho vyťaženia alebo prudkého nárastu pohybu.",
     "activeHours": "Aktívne hodiny",
     "activeHoursDescription": "Pozorované pracovné okno za posledných sedem dní.",
     "howMetricRead": "Ako čítať metriku",
@@ -294,44 +294,44 @@
     "evidenceImageFallback": "Podkladová snímka",
     "emptyTitle": "Vyberte report z bočného panela alebo vytvorte nový.",
     "emptyDescription": "AI reporty analyzujú fotografie stavby a metriky, aby vyhodnotili stavebný postup.",
-    "description": "Skontrolujte opakuj?ce sa AI preh?ady a vytvorte vlastn? anal?zy pre konkr?tne ?asov? intervaly.",
-    "generateDescription": "Vytvorte ad hoc AI s?hrn pre zvolen? d?tumov? obdobie. Pl?novan? denn? a t??denn? reporty sa zobrazia ni??ie v samostatn?ch sekci?ch hist?rie.",
-    "noReportsTitle": "Zatia? nie s? ?iadne reporty",
-    "noReportsDescription": "Denn? preh?ady, t??denn? s?hrny a vlastn? anal?zy sa tu zobrazia po vygenerovan?.",
-    "generatedAt": "Vygenerovan? {{date}}",
-    "weekOf": "T??de? od {{date}}",
-    "periodUnavailable": "Obdobie nie je dostupn?",
-    "lowConfidenceTitle": "Obmedzen? podklady",
-    "lowConfidenceDescription": "Tento report vych?dza z obmedzen?ho vizu?lneho podkladu pre zvolen? obdobie.",
+    "description": "Skontrolujte opakujúce sa AI prehľady a vytvorte vlastné analýzy pre konkrétne časové intervaly.",
+    "generateDescription": "Vytvorte ad hoc AI súhrn pre zvolené dátumové obdobie. Plánované denné a týždenné reporty sa zobrazia nižšie v samostatných sekciách histórie.",
+    "noReportsTitle": "Zatiaľ nie sú žiadne reporty",
+    "noReportsDescription": "Denné prehľady, týždenné súhrny a vlastné analýzy sa tu zobrazia po vygenerovaní.",
+    "generatedAt": "Vygenerované {{date}}",
+    "weekOf": "Týždeň od {{date}}",
+    "periodUnavailable": "Obdobie nie je dostupné",
+    "lowConfidenceTitle": "Obmedzené podklady",
+    "lowConfidenceDescription": "Tento report vychádza z obmedzeného vizuálneho podkladu pre zvolené obdobie.",
     "reportTypes": {
-      "daily": "Denn? preh?ad",
-      "weekly": "T??denn? s?hrn",
-      "custom": "Vlastn? anal?za"
+      "daily": "Denný prehľad",
+      "weekly": "Týždenný súhrn",
+      "custom": "Vlastná analýza"
     },
     "origins": {
-      "automatic": "Automatick?",
-      "manual": "Manu?lne"
+      "automatic": "Automatické",
+      "manual": "Manuálne"
     },
     "confidenceLevels": {
-      "high": "Vysok? istota",
-      "medium": "Stredn? istota",
-      "low": "N?zka istota"
+      "high": "Vysoká istota",
+      "medium": "Stredná istota",
+      "low": "Nízka istota"
     },
     "sections": {
       "daily": {
-        "title": "Denn? preh?ady",
-        "description": "Operat?vne denn? s?hrny pre ved?cich stavby a koordin?torov.",
-        "empty": "Zatia? nie s? dostupn? ?iadne denn? preh?ady."
+        "title": "Denné prehľady",
+        "description": "Operatívne denné súhrny pre vedúcich stavby a koordinátorov.",
+        "empty": "Zatiaľ nie sú dostupné žiadne denné prehľady."
       },
       "weekly": {
-        "title": "T??denn? s?hrny",
-        "description": "T??denn? koment?re zalo?en? na trendoch pre koordin?ciu a kontrolu projektu.",
-        "empty": "Zatia? nie s? dostupn? ?iadne t??denn? s?hrny."
+        "title": "Týždenné súhrny",
+        "description": "Týždenné komentáre založené na trendoch pre koordináciu a kontrolu projektu.",
+        "empty": "Zatiaľ nie sú dostupné žiadne týždenné súhrny."
       },
       "custom": {
-        "title": "Vlastn? anal?zy",
-        "description": "Manu?lne vytvoren? s?hrny pre zvolen? obdobie na ad hoc preverenie.",
-        "empty": "Zatia? nie s? dostupn? ?iadne vlastn? anal?zy."
+        "title": "Vlastné analýzy",
+        "description": "Manuálne vytvorené súhrny pre zvolené obdobie na ad hoc preverenie.",
+        "empty": "Zatiaľ nie sú dostupné žiadne vlastné analýzy."
       }
     }
   },

@@ -463,6 +463,14 @@ export default function ReportsPage() {
                   <p className="mt-1 text-xs text-muted">
                     {t("reportsPage.evidenceSectionDescription")}
                   </p>
+                  {activeEvidenceImages.length > 1 ? (
+                    <p className="mt-2 text-xs font-medium text-muted">
+                      {`${Math.min(evidenceStartIndex + 1, activeEvidenceImages.length)}/${activeEvidenceImages.length} - ${Math.min(
+                        evidenceStartIndex + visibleEvidenceCount,
+                        activeEvidenceImages.length,
+                      )}/${activeEvidenceImages.length}`}
+                    </p>
+                  ) : null}
                   <div className="mt-4 flex items-center gap-3">
                     {activeEvidenceImages.length > 1 ? (
                       <Button
@@ -477,7 +485,7 @@ export default function ReportsPage() {
                       </Button>
                     ) : null}
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div ref={evidenceViewportRef} className="min-w-0 flex-1 overflow-hidden">
+                      <div ref={evidenceViewportRef} className="mx-auto min-w-0 max-w-[860px] flex-1 overflow-hidden">
                         <div
                           className="grid gap-3"
                           style={{ gridTemplateColumns: `repeat(${visibleEvidenceCount}, minmax(0, 1fr))` }}
@@ -498,9 +506,12 @@ export default function ReportsPage() {
                                     className="h-full w-full object-cover"
                                   />
                                 </div>
-                                <div className="flex items-start justify-between gap-3 px-3 py-3">
+                                <div className="flex items-start justify-between gap-3 px-3 py-2.5">
                                   <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium text-foreground">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                                      {`${index + 1}/${activeEvidenceImages.length}`}
+                                    </p>
+                                    <p className="mt-1 text-sm font-medium text-foreground">
                                       {getEvidenceLabel(image, index)}
                                     </p>
                                     <p className="mt-1 line-clamp-2 break-all text-[11px] text-muted">

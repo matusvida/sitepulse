@@ -51,15 +51,3 @@ body {
   background: rgba(29, 95, 209, 0.16);
   color: var(--color-foreground);
 }
-
-@media (hover: hover) and (pointer: fine) {
-  .report-evidence-card:hover {
-    border-color: color-mix(in srgb, var(--color-primary) 40%, transparent);
-    background: color-mix(in srgb, var(--color-primary) 5%, white);
-    box-shadow: 0 20px 44px -30px rgba(15, 23, 42, 0.4);
-  }
-
-  .report-evidence-card:hover .report-evidence-image {
-    transform: scale(1.03);
-  }
-}

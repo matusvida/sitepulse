@@ -243,14 +243,10 @@ export default function ReportsPage() {
     return 1;
   }, [evidenceViewportWidth]);
 
-  const evidenceGap = 12;
-
-  const evidenceCardWidth = useMemo(() => {
-    if (!evidenceViewportWidth || visibleEvidenceCount <= 0) return 220;
-    return Math.floor(
-      (evidenceViewportWidth - evidenceGap * (visibleEvidenceCount - 1)) / visibleEvidenceCount,
-    );
-  }, [evidenceGap, evidenceViewportWidth, visibleEvidenceCount]);
+  const visibleEvidenceImages = useMemo(
+    () => activeEvidenceImages.slice(evidenceStartIndex, evidenceStartIndex + visibleEvidenceCount),
+    [activeEvidenceImages, evidenceStartIndex, visibleEvidenceCount],
+  );
 
   useEffect(() => {
     const maxStart = Math.max(0, activeEvidenceImages.length - visibleEvidenceCount);
@@ -259,7 +255,6 @@ export default function ReportsPage() {
 
   const canScrollEvidenceLeft = evidenceStartIndex > 0;
   const canScrollEvidenceRight = evidenceStartIndex + visibleEvidenceCount < activeEvidenceImages.length;
-  const evidenceTrackOffset = evidenceStartIndex * (evidenceCardWidth + evidenceGap);
 
   return (
     <div className="space-y-6">
@@ -468,12 +463,12 @@ export default function ReportsPage() {
                   <p className="mt-1 text-xs text-muted">
                     {t("reportsPage.evidenceSectionDescription")}
                   </p>
-                  <div className="relative mt-4">
+                  <div className="mt-4 flex items-center gap-3">
                     {activeEvidenceImages.length > 1 ? (
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute left-1 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full bg-white/92 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.45)]"
+                        className="shrink-0 rounded-full bg-white/92 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.45)]"
                         onClick={() => setEvidenceStartIndex((current) => Math.max(0, current - 1))}
                         disabled={!canScrollEvidenceLeft}
                         aria-label="Scroll evidence images left"
@@ -481,60 +476,61 @@ export default function ReportsPage() {
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                     ) : null}
-                    <div ref={evidenceViewportRef} className="overflow-hidden px-14">
-                      <div
-                        className="flex transition-transform duration-300 ease-out"
-                        style={{
-                          gap: `${evidenceGap}px`,
-                          transform: `translateX(-${evidenceTrackOffset}px)`,
-                        }}
-                      >
-                        {activeEvidenceImages.map((image, index) => (
-                          <button
-                            key={`${image.url}-${index}`}
-                            type="button"
-                            onClick={() => setSelectedEvidenceIndex(index)}
-                            className="group shrink-0 overflow-hidden rounded-[18px] border border-border/70 bg-background text-left transition-[border-color,background-color,transform,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_20px_44px_-30px_rgba(15,23,42,0.4)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
-                            style={{ width: `${evidenceCardWidth}px` }}
-                          >
-                            <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-                              <img
-                                src={image.url}
-                                alt={getEvidenceLabel(image, index)}
-                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                              />
-                            </div>
-                            <div className="flex items-start justify-between gap-3 px-3 py-3">
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground">
-                                  {getEvidenceLabel(image, index)}
-                                </p>
-                                <p className="mt-1 line-clamp-2 break-all text-[11px] text-muted">
-                                  {image.key || image.url}
-                                </p>
-                              </div>
-                              <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-primary" />
-                            </div>
-                          </button>
-                        ))}
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div ref={evidenceViewportRef} className="min-w-0 flex-1 overflow-hidden">
+                        <div
+                          className="grid gap-3"
+                          style={{ gridTemplateColumns: `repeat(${visibleEvidenceCount}, minmax(0, 1fr))` }}
+                        >
+                          {visibleEvidenceImages.map((image, visibleIndex) => {
+                            const index = evidenceStartIndex + visibleIndex;
+                            return (
+                              <button
+                                key={`${image.url}-${index}`}
+                                type="button"
+                                onClick={() => setSelectedEvidenceIndex(index)}
+                                className="overflow-hidden rounded-[18px] border border-border/70 bg-background text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                              >
+                                <div className="aspect-[4/3] overflow-hidden bg-slate-100">
+                                  <img
+                                    src={image.url}
+                                    alt={getEvidenceLabel(image, index)}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex items-start justify-between gap-3 px-3 py-3">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium text-foreground">
+                                      {getEvidenceLabel(image, index)}
+                                    </p>
+                                    <p className="mt-1 line-clamp-2 break-all text-[11px] text-muted">
+                                      {image.key || image.url}
+                                    </p>
+                                  </div>
+                                  <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted" />
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
+                      {activeEvidenceImages.length > 1 ? (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0 rounded-full bg-white/92 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.45)]"
+                          onClick={() =>
+                            setEvidenceStartIndex((current) =>
+                              Math.min(activeEvidenceImages.length - visibleEvidenceCount, current + 1),
+                            )
+                          }
+                          disabled={!canScrollEvidenceRight}
+                          aria-label="Scroll evidence images right"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      ) : null}
                     </div>
-                    {activeEvidenceImages.length > 1 ? (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute right-1 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full bg-white/92 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.45)]"
-                        onClick={() =>
-                          setEvidenceStartIndex((current) =>
-                            Math.min(activeEvidenceImages.length - visibleEvidenceCount, current + 1),
-                          )
-                        }
-                        disabled={!canScrollEvidenceRight}
-                        aria-label="Scroll evidence images right"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
               ) : null}

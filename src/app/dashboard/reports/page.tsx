@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Markdown from "react-markdown";
 import { useProject } from "@/lib/project-context";
 import { fetchReport, fetchReports, fetchSnapshotDates, generateReport } from "@/lib/api";
@@ -68,7 +68,8 @@ export default function ReportsPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [selectedEvidenceIndex, setSelectedEvidenceIndex] = useState<number | null>(null);
   const [evidenceStartIndex, setEvidenceStartIndex] = useState(0);
-  const [visibleEvidenceCount, setVisibleEvidenceCount] = useState(3);
+  const [evidenceViewportWidth, setEvidenceViewportWidth] = useState(0);
+  const evidenceViewportRef = useRef<HTMLDivElement>(null);
 
   const effectiveFrom = dateFrom || sortedDates[0] || "";
   const effectiveTo = dateTo || sortedDates[sortedDates.length - 1] || "";
@@ -222,27 +223,43 @@ export default function ReportsPage() {
   );
 
   useEffect(() => {
-    const updateVisibleEvidenceCount = () => {
-      setVisibleEvidenceCount(window.innerWidth >= 1680 ? 4 : 3);
-    };
+    const viewport = evidenceViewportRef.current;
+    if (!viewport) return;
 
-    updateVisibleEvidenceCount();
-    window.addEventListener("resize", updateVisibleEvidenceCount);
-    return () => window.removeEventListener("resize", updateVisibleEvidenceCount);
-  }, []);
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      setEvidenceViewportWidth(entry.contentRect.width);
+    });
+
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [activeEvidenceImages.length]);
+
+  const visibleEvidenceCount = useMemo(() => {
+    if (evidenceViewportWidth >= 980) return 4;
+    if (evidenceViewportWidth >= 700) return 3;
+    if (evidenceViewportWidth >= 420) return 2;
+    return 1;
+  }, [evidenceViewportWidth]);
+
+  const evidenceGap = 12;
+
+  const evidenceCardWidth = useMemo(() => {
+    if (!evidenceViewportWidth || visibleEvidenceCount <= 0) return 220;
+    return Math.floor(
+      (evidenceViewportWidth - evidenceGap * (visibleEvidenceCount - 1)) / visibleEvidenceCount,
+    );
+  }, [evidenceGap, evidenceViewportWidth, visibleEvidenceCount]);
 
   useEffect(() => {
     const maxStart = Math.max(0, activeEvidenceImages.length - visibleEvidenceCount);
     setEvidenceStartIndex((current) => Math.min(current, maxStart));
   }, [activeEvidenceImages.length, visibleEvidenceCount]);
 
-  const visibleEvidenceImages = useMemo(
-    () => activeEvidenceImages.slice(evidenceStartIndex, evidenceStartIndex + visibleEvidenceCount),
-    [activeEvidenceImages, evidenceStartIndex, visibleEvidenceCount],
-  );
-
   const canScrollEvidenceLeft = evidenceStartIndex > 0;
   const canScrollEvidenceRight = evidenceStartIndex + visibleEvidenceCount < activeEvidenceImages.length;
+  const evidenceTrackOffset = evidenceStartIndex * (evidenceCardWidth + evidenceGap);
 
   return (
     <div className="space-y-6">
@@ -451,12 +468,12 @@ export default function ReportsPage() {
                   <p className="mt-1 text-xs text-muted">
                     {t("reportsPage.evidenceSectionDescription")}
                   </p>
-                  <div className="relative mx-auto mt-4 w-fit max-w-full">
+                  <div className="relative mt-4">
                     {activeEvidenceImages.length > 1 ? (
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute left-0 top-1/2 z-10 h-9 w-9 -translate-x-[calc(100%+0.75rem)] -translate-y-1/2 rounded-full"
+                        className="absolute left-1 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full bg-white/92 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.45)]"
                         onClick={() => setEvidenceStartIndex((current) => Math.max(0, current - 1))}
                         disabled={!canScrollEvidenceLeft}
                         aria-label="Scroll evidence images left"
@@ -464,16 +481,21 @@ export default function ReportsPage() {
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                     ) : null}
-                    <div className="w-[684px] max-w-full overflow-hidden xl:w-[916px]">
-                      <div className="flex gap-3">
-                        {visibleEvidenceImages.map((image, visibleIndex) => {
-                          const index = evidenceStartIndex + visibleIndex;
-                          return (
+                    <div ref={evidenceViewportRef} className="overflow-hidden px-14">
+                      <div
+                        className="flex transition-transform duration-300 ease-out"
+                        style={{
+                          gap: `${evidenceGap}px`,
+                          transform: `translateX(-${evidenceTrackOffset}px)`,
+                        }}
+                      >
+                        {activeEvidenceImages.map((image, index) => (
                           <button
                             key={`${image.url}-${index}`}
                             type="button"
                             onClick={() => setSelectedEvidenceIndex(index)}
-                            className="group min-w-[220px] max-w-[220px] shrink-0 overflow-hidden rounded-[18px] border border-border/70 bg-background text-left transition-[border-color,background-color,transform,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_20px_44px_-30px_rgba(15,23,42,0.4)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                            className="group shrink-0 overflow-hidden rounded-[18px] border border-border/70 bg-background text-left transition-[border-color,background-color,transform,box-shadow] hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_20px_44px_-30px_rgba(15,23,42,0.4)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                            style={{ width: `${evidenceCardWidth}px` }}
                           >
                             <div className="aspect-[4/3] overflow-hidden bg-slate-100">
                               <img
@@ -494,15 +516,14 @@ export default function ReportsPage() {
                               <ArrowUpRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors group-hover:text-primary" />
                             </div>
                           </button>
-                        );
-                        })}
+                        ))}
                       </div>
                     </div>
                     {activeEvidenceImages.length > 1 ? (
                       <Button
                         variant="outline"
                         size="icon"
-                        className="absolute right-0 top-1/2 z-10 h-9 w-9 translate-x-[calc(100%+0.75rem)] -translate-y-1/2 rounded-full"
+                        className="absolute right-1 top-1/2 z-10 h-9 w-9 -translate-y-1/2 rounded-full bg-white/92 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.45)]"
                         onClick={() =>
                           setEvidenceStartIndex((current) =>
                             Math.min(activeEvidenceImages.length - visibleEvidenceCount, current + 1),

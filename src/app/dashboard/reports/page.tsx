@@ -255,6 +255,20 @@ export default function ReportsPage() {
 
   const canScrollEvidenceLeft = evidenceStartIndex > 0;
   const canScrollEvidenceRight = evidenceStartIndex + visibleEvidenceCount < activeEvidenceImages.length;
+  const evidenceWindowLabel = useMemo(() => {
+    const start = Math.min(evidenceStartIndex + 1, activeEvidenceImages.length);
+    const end = Math.min(evidenceStartIndex + visibleEvidenceCount, activeEvidenceImages.length);
+
+    if (!activeEvidenceImages.length) {
+      return "";
+    }
+
+    if (start === end) {
+      return `${start}/${activeEvidenceImages.length}`;
+    }
+
+    return `${start}-${end} / ${activeEvidenceImages.length}`;
+  }, [activeEvidenceImages.length, evidenceStartIndex, visibleEvidenceCount]);
 
   return (
     <div className="space-y-6">
@@ -464,12 +478,7 @@ export default function ReportsPage() {
                     {t("reportsPage.evidenceSectionDescription")}
                   </p>
                   {activeEvidenceImages.length > 1 ? (
-                    <p className="mt-2 text-xs font-medium text-muted">
-                      {`${Math.min(evidenceStartIndex + 1, activeEvidenceImages.length)}/${activeEvidenceImages.length} - ${Math.min(
-                        evidenceStartIndex + visibleEvidenceCount,
-                        activeEvidenceImages.length,
-                      )}/${activeEvidenceImages.length}`}
-                    </p>
+                    <p className="mt-2 text-xs font-medium text-muted">{evidenceWindowLabel}</p>
                   ) : null}
                   <div className="mt-4 flex items-center gap-3">
                     {activeEvidenceImages.length > 1 ? (
@@ -485,7 +494,7 @@ export default function ReportsPage() {
                       </Button>
                     ) : null}
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div ref={evidenceViewportRef} className="mx-auto min-w-0 max-w-[860px] flex-1 overflow-hidden">
+                      <div ref={evidenceViewportRef} className="mx-auto min-w-0 max-w-[760px] flex-1 overflow-hidden">
                         <div
                           className="grid gap-3"
                           style={{ gridTemplateColumns: `repeat(${visibleEvidenceCount}, minmax(0, 1fr))` }}

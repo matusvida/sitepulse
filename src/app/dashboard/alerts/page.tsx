@@ -162,7 +162,7 @@ export default function AlertsPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="relative z-20">
         <CardHeader className="mb-0">
           <CardTitle className="flex items-center gap-2">
             {t("alertsPage.filterTitle")}
@@ -227,7 +227,7 @@ export default function AlertsPage() {
             ))}
           </div>
 
-          <Card className="hidden overflow-hidden p-0 lg:block">
+          <Card className="relative z-10 hidden overflow-hidden p-0 lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>

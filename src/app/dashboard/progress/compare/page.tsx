@@ -176,9 +176,9 @@ export default function ProgressComparePage() {
     return (
       <AsyncState
         type="error"
-        title="Unable to load snapshots for comparison"
+        title={t("comparePage.errorTitle")}
         description={error}
-        actionLabel="Retry"
+        actionLabel={t("common.retry")}
         onAction={refetch}
       />
     );
@@ -275,7 +275,7 @@ export default function ProgressComparePage() {
               </div>
               {sameSelection ? (
                 <p className="text-sm text-amber-700">
-                  Choose two different dates to reveal a meaningful visual comparison.
+                  {t("comparePage.sameSelectionWarning")}
                 </p>
               ) : null}
             </CardContent>
@@ -299,13 +299,13 @@ export default function ProgressComparePage() {
                   {snapshotB?.url && failedDateB !== resolvedDateB ? (
                     <img
                       src={snapshotB.url}
-                      alt={`Snapshot B - ${resolvedDateB}`}
+                      alt={t("comparePage.snapshotAlt", { label: t("comparePage.snapshotB"), date: resolvedDateB })}
                       className="h-full w-full object-cover object-bottom pointer-events-none"
                       draggable={false}
                       onError={() => setFailedDateB(resolvedDateB)}
                     />
                   ) : (
-                    placeholder(`Snapshot B - ${resolvedDateB}`)
+                    placeholder(t("comparePage.snapshotAlt", { label: t("comparePage.snapshotB"), date: resolvedDateB }))
                   )}
                 </div>
 
@@ -316,13 +316,13 @@ export default function ProgressComparePage() {
                   {snapshotA?.url && failedDateA !== resolvedDateA ? (
                     <img
                       src={snapshotA.url}
-                      alt={`Snapshot A - ${resolvedDateA}`}
+                      alt={t("comparePage.snapshotAlt", { label: t("comparePage.snapshotA"), date: resolvedDateA })}
                       className="h-full w-full object-cover object-bottom pointer-events-none"
                       draggable={false}
                       onError={() => setFailedDateA(resolvedDateA)}
                     />
                   ) : (
-                    placeholder(`Snapshot A - ${resolvedDateA}`)
+                    placeholder(t("comparePage.snapshotAlt", { label: t("comparePage.snapshotA"), date: resolvedDateA }))
                   )}
                 </div>
 
@@ -359,6 +359,9 @@ export default function ProgressComparePage() {
                 <CardDescription>{t("comparePage.metricChangesDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-4 rounded-[20px] bg-accent/60 p-4 text-sm text-muted">
+                  <p>{t("comparePage.metricContextNote")}</p>
+                </div>
                 <ul className="space-y-3">
                   {detectedChanges.map((change, index) => (
                     <li key={change} className="flex items-start gap-3">

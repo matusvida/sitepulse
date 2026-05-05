@@ -102,9 +102,9 @@ export default function OverviewPage() {
       return (
         <AsyncState
           type="error"
-          title="Unable to load overview metrics"
+          title={t("overview.errorTitle")}
           description={weeklyError ?? activityError ?? undefined}
-          actionLabel="Retry"
+          actionLabel={t("common.retry")}
           onAction={refetchWeekly}
         />
       );
@@ -144,7 +144,7 @@ export default function OverviewPage() {
       icon: ArrowUpRight,
       label: t("overview.kpiWeeklyProgress"),
       value: `${latest.progressDelta}%`,
-      note: t("overview.trendPrev"),
+      note: t("overview.kpiWeeklyProgressNote"),
       tone: "bg-blue-100 text-blue-700",
     },
     {
@@ -152,7 +152,7 @@ export default function OverviewPage() {
       icon: Activity,
       label: t("overview.kpiActivityIndex"),
       value: latest.activityIndex.toFixed(0),
-      note: t("overview.trendAboveAvg"),
+      note: t("overview.kpiActivityIndexNote"),
       tone: "bg-emerald-100 text-emerald-700",
     },
     {
@@ -160,7 +160,7 @@ export default function OverviewPage() {
       icon: Clock,
       label: t("overview.kpiActiveHours"),
       value: `${latest.activeHours}h`,
-      note: t("overview.trendOnTrack"),
+      note: t("overview.kpiActiveHoursNote"),
       tone: "bg-indigo-100 text-indigo-700",
     },
     {
@@ -524,6 +524,10 @@ export default function OverviewPage() {
                 />
               </AreaChart>
             </ChartWrapper>
+            <div className="mt-4 rounded-[20px] bg-accent/60 p-4 text-sm text-muted">
+              <p className="font-medium text-foreground">{t("overview.chartInterpretationTitle")}</p>
+              <p className="mt-2">{t("overview.chartInterpretationBody")}</p>
+            </div>
           </CardContent>
         </Card>
 

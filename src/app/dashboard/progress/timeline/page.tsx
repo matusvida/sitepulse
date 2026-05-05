@@ -166,7 +166,7 @@ function SnapshotViewer({
     <>
       <img
         src={layerA}
-        alt={`Site snapshot - ${currentDate}`}
+        alt={currentDate}
         className="absolute inset-0 h-full w-full object-cover object-bottom"
         style={{
           opacity: layerAVisible ? 1 : 0,
@@ -177,7 +177,7 @@ function SnapshotViewer({
       />
       <img
         src={layerB}
-        alt={`Site snapshot - ${currentDate}`}
+        alt={currentDate}
         className="absolute inset-0 h-full w-full object-cover object-bottom"
         style={{
           opacity: layerAVisible ? 0 : 1,
@@ -413,9 +413,9 @@ export default function TimelinePage() {
     return (
       <AsyncState
         type="error"
-        title="Unable to load timeline snapshots"
+        title={t("timelinePage.errorTitle")}
         description={error}
-        actionLabel="Retry"
+        actionLabel={t("common.retry")}
         onAction={refetchSnapshots}
       />
     );
@@ -470,7 +470,7 @@ export default function TimelinePage() {
                   size="icon"
                   onClick={handlePrev}
                   disabled={activeDateIdx <= 0 || playing}
-                  aria-label="Previous capture"
+                  aria-label={t("timelinePage.previousDate")}
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -479,7 +479,7 @@ export default function TimelinePage() {
                   size="icon"
                   onClick={togglePlay}
                   disabled={sortedDates.length < 2}
-                  aria-label={playing ? "Pause playback" : "Start playback"}
+                  aria-label={playing ? t("timelinePage.pause") : t("timelinePage.play")}
                 >
                   {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
@@ -488,7 +488,7 @@ export default function TimelinePage() {
                   size="icon"
                   onClick={handleNext}
                   disabled={activeDateIdx >= sortedDates.length - 1 || playing}
-                  aria-label="Next capture"
+                  aria-label={t("timelinePage.nextDate")}
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -514,7 +514,7 @@ export default function TimelinePage() {
                 className="relative aspect-[21/9] w-full overflow-hidden rounded-[28px] border border-white/75 bg-slate-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
                 tabIndex={0}
                 role="region"
-                aria-label="Timeline image viewer"
+                aria-label={t("timelinePage.viewerAria")}
                 onKeyDown={(event) => {
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();

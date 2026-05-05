@@ -60,9 +60,9 @@ export default function ProgressPage() {
       return (
         <AsyncState
           type="error"
-          title="Unable to load progress metrics"
+          title={t("progressPage.errorTitle")}
           description={error}
-          actionLabel="Retry"
+          actionLabel={t("common.retry")}
           onAction={refetch}
         />
       );
@@ -121,6 +121,7 @@ export default function ProgressPage() {
               <div>
                 <p className="text-sm font-medium text-muted">{t("progressPage.averageWeeklyDelta")}</p>
                 <p className="text-2xl font-semibold tracking-tight">{summary.averageDelta.toFixed(1)}%</p>
+                <p className="mt-1 text-sm text-muted">{t("progressPage.averageWeeklyDeltaNote")}</p>
               </div>
             </div>
           </Card>
@@ -132,6 +133,7 @@ export default function ProgressPage() {
               <div>
                 <p className="text-sm font-medium text-muted">{t("progressPage.bestObservedWeek")}</p>
                 <p className="text-2xl font-semibold tracking-tight">{summary.bestWeek.toFixed(1)}%</p>
+                <p className="mt-1 text-sm text-muted">{t("progressPage.bestObservedWeekNote")}</p>
               </div>
             </div>
           </Card>
@@ -143,6 +145,7 @@ export default function ProgressPage() {
               <div>
                 <p className="text-sm font-medium text-muted">{t("progressPage.averageActiveHours")}</p>
                 <p className="text-2xl font-semibold tracking-tight">{summary.averageHours.toFixed(0)}h</p>
+                <p className="mt-1 text-sm text-muted">{t("progressPage.averageActiveHoursNote")}</p>
               </div>
             </div>
           </Card>
@@ -154,6 +157,7 @@ export default function ProgressPage() {
               <div>
                 <p className="text-sm font-medium text-muted">{t("progressPage.currentRiskLevel")}</p>
                 <p className={`text-2xl font-semibold tracking-tight ${riskTone}`}>{localizedRiskLevel}</p>
+                <p className="mt-1 text-sm text-muted">{t("progressPage.currentRiskLevelNote")}</p>
               </div>
             </div>
           </Card>
@@ -228,6 +232,10 @@ export default function ProgressPage() {
                   <p className="mt-2 text-3xl font-semibold tracking-tight">{summary.latest.progressDelta}%</p>
                   <p className="mt-1 text-sm text-muted">{t("progressPage.comparedAgainst", { count: timeframeWeeks[timeframe] })}</p>
                 </div>
+                <div className="rounded-[24px] border border-border/70 bg-white/75 p-4 text-sm text-muted">
+                  <p className="font-medium text-foreground">{t("progressPage.confidenceTitle")}</p>
+                  <p className="mt-2">{t("progressPage.confidenceBody")}</p>
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                   <div className="rounded-2xl border border-border/70 bg-white/75 p-4">
                     <p className="text-sm font-medium text-foreground">{t("progressPage.activityIndex")}</p>
@@ -252,6 +260,7 @@ export default function ProgressPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted">
+              <p>{t("progressPage.metricReadBody0")}</p>
               <p>{t("progressPage.metricReadBody1")}</p>
               <p>{t("progressPage.metricReadBody2")}</p>
             </CardContent>

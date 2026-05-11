@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/language-context";
 import { useProject } from "@/lib/project-context";
+import { useAuth } from "@/lib/auth-context";
 import { Select } from "@/components/ui/select";
-import { BarChart3, Bell, Calendar, ClipboardList, FileText, GitCompareArrows, LayoutDashboard, MapPin, Settings, TrendingUp, X } from "lucide-react";
+import { BarChart3, Bell, Calendar, ClipboardList, FileText, GitCompareArrows, LayoutDashboard, MapPin, Settings, Shield, TrendingUp, X } from "lucide-react";
 
 interface SidebarProps {
   open: boolean;
@@ -28,6 +29,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { t } = useLanguage();
   const { currentProject, setProjectId, allProjects } = useProject();
+  const { user } = useAuth();
 
   const primaryNavItems: NavItem[] = [
     { href: "/dashboard", label: t("sidebar.overview"), icon: LayoutDashboard },
@@ -47,6 +49,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   ];
 
   const settingsItem = { href: "/dashboard/settings", label: t("sidebar.settings"), icon: Settings };
+  const adminItem = { href: "/dashboard/admin", label: "Users", icon: Shield };
 
   const projectOptions = allProjects.map((project) => ({
     value: project.id,
@@ -156,25 +159,33 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
         {t("sidebar.projectSwitcher")}
       </p>
-      <div className="mt-2">
-        <Select
-          id="sidebar-project-switcher"
-          aria-label={t("topNav.selectProject")}
-          options={projectOptions}
-          value={currentProject.id}
-          onChange={(event) => setProjectId(event.target.value)}
-          className="h-8.5 rounded-xl border-white/70 bg-white/80 text-[13px] xl:h-9"
-        />
-      </div>
-      <div className="mt-2.5 flex items-start gap-2 rounded-xl bg-accent/80 px-2.5 py-2 xl:mt-3 xl:gap-2.5 xl:rounded-2xl xl:px-3 xl:py-2.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm xl:h-9 xl:w-9 xl:rounded-xl">
-          <MapPin className="h-4 w-4 text-primary" />
+      {allProjects.length > 0 ? (
+        <>
+          <div className="mt-2">
+            <Select
+              id="sidebar-project-switcher"
+              aria-label={t("topNav.selectProject")}
+              options={projectOptions}
+              value={currentProject.id}
+              onChange={(event) => setProjectId(event.target.value)}
+              className="h-8.5 rounded-xl border-white/70 bg-white/80 text-[13px] xl:h-9"
+            />
+          </div>
+          <div className="mt-2.5 flex items-start gap-2 rounded-xl bg-accent/80 px-2.5 py-2 xl:mt-3 xl:gap-2.5 xl:rounded-2xl xl:px-3 xl:py-2.5">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm xl:h-9 xl:w-9 xl:rounded-xl">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-[13px] font-semibold text-foreground xl:text-sm">{currentProject.name}</p>
+              <p className="mt-0.5 truncate text-xs text-muted">{currentProject.location}</p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="mt-2 rounded-xl bg-accent/80 px-3 py-2 text-xs text-muted">
+          No assigned projects
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-foreground xl:text-sm">{currentProject.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted">{currentProject.location}</p>
-        </div>
-      </div>
+      )}
     </div>
   );
 
@@ -189,6 +200,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </div>
           <div className="mt-3 border-t border-white/70 pt-3">
+            {user?.role === "ADMIN" ? renderNavLink(adminItem) : null}
             {renderNavLink(settingsItem)}
           </div>
         </div>
@@ -221,6 +233,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               {projectPanel}
               {nav}
               <div className="border-t border-white/70 pt-4">
+                {user?.role === "ADMIN" ? renderNavLink(adminItem) : null}
                 {renderNavLink(settingsItem)}
               </div>
             </div>

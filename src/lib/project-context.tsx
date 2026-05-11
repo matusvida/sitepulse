@@ -9,8 +9,16 @@ import {
   useMemo,
 } from "react";
 import { fetchProjects } from "./api";
-import { projects as mockProjects } from "./mock-data";
 import type { Project } from "./types";
+
+const EMPTY_PROJECT: Project = {
+  id: "",
+  name: "No project access",
+  location: "",
+  coveragePercent: 0,
+  cameraCount: 0,
+  lastSnapshotAt: new Date(0).toISOString(),
+};
 
 interface ProjectContextValue {
   currentProject: Project;
@@ -23,21 +31,23 @@ interface ProjectContextValue {
 const ProjectContext = createContext<ProjectContextValue | null>(null);
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
-  const [projects, setProjects] = useState<Project[]>(mockProjects);
-  const [projectId, setProjectId] = useState<string>(mockProjects[0].id);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectId, setProjectId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchProjects();
-      if (data.length > 0) {
-        setProjects(data);
-        setProjectId((prev) => {
-          const stillExists = data.some((p) => p.id === prev);
-          return stillExists ? prev : data[0].id;
-        });
-      }
+      setProjects(data);
+      setProjectId((prev) => {
+        if (data.length === 0) return "";
+        const stillExists = data.some((p) => p.id === prev);
+        return stillExists ? prev : data[0].id;
+      });
+    } catch {
+      setProjects([]);
+      setProjectId("");
     } finally {
       setLoading(false);
     }
@@ -48,7 +58,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   }, [load]);
 
   const currentProject = useMemo(
-    () => projects.find((p) => p.id === projectId) ?? projects[0],
+    () => projects.find((p) => p.id === projectId) ?? projects[0] ?? EMPTY_PROJECT,
     [projects, projectId],
   );
 

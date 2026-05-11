@@ -1,22 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { login } from "@/lib/api";
 
 export default function SignInPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      await login(email, password);
       router.push("/dashboard");
-    }, 600);
+    } catch {
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,10 +64,13 @@ export default function SignInPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in..." : "Sign in"}
             </Button>
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </form>
 
-          <p className="mt-6 text-center text-xs text-muted">
-            Demo prototype - any credentials will work
+          <p className="mt-6 text-center text-sm text-muted">
+            <Link href="/forgot-password" className="font-medium text-primary hover:underline">
+              Forgot password?
+            </Link>
           </p>
         </div>
       </div>

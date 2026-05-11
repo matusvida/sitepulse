@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useAuth } from "@/lib/auth-context";
 import { useProject } from "@/lib/project-context";
 import { updateProject } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
+import { getUserDisplayName } from "@/lib/utils";
 import { AsyncState } from "@/components/ui/async-state";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Save, Loader2 } from "lucide-react";
 
 export default function SettingsPage() {
+  const { user } = useAuth();
   const { currentProject, refresh } = useProject();
   const { t } = useLanguage();
 
@@ -25,7 +28,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const unsupportedHint = "Read-only for now. The current backend only saves project name and location.";
+  const unsupportedHint = t("settingsPage.readOnlyHint");
 
   useEffect(() => {
     setProjectName(currentProject.name);
@@ -70,12 +73,26 @@ export default function SettingsPage() {
       <h1 className="text-xl font-semibold">{t("settingsPage.title")}</h1>
       <AsyncState
         type="empty"
-        title="Only project profile settings are editable today"
-        description="Monitoring and notification preferences are visible, but the current backend does not persist changes to those fields yet."
+        title={t("settingsPage.readOnlyTitle")}
+        description={t("settingsPage.readOnlyDescription")}
         className="min-h-[140px] items-start text-left"
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
+          <CardTitle>{t("settingsPage.profile")}</CardTitle>
+          <CardContent className="mt-4 space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input id="first-name" label={t("settingsPage.firstName")} value={user?.firstName ?? ""} disabled />
+              <Input id="last-name" label={t("settingsPage.lastName")} value={user?.lastName ?? ""} disabled />
+            </div>
+            <Input id="account-email" label={t("settingsPage.email")} type="email" value={user?.email ?? ""} disabled />
+            <p className="text-xs text-muted">
+              {t("settingsPage.signedInAs", { name: getUserDisplayName(user) })} {t("settingsPage.profileHelp")}
+            </p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardTitle>{t("settingsPage.projectSettings")}</CardTitle>
           <CardContent className="mt-4 space-y-4">

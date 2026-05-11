@@ -121,3 +121,27 @@ export interface ProgressReport {
   createdAt: string | null;
   evidenceImages?: ReportEvidenceImage[];
 }
+
+export type UserRole = "ADMIN" | "USER";
+export type UserStatus = "INVITED" | "ACTIVE" | "DISABLED";
+
+export interface UserProfileIdentity {
+  id: number;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  projectIds: number[];
+}
+
+export type AuthUser = UserProfileIdentity;
+
+export interface AuthSession {
+  user: AuthUser;
+}
+
+export interface AdminUser extends UserProfileIdentity {
+  lastLoginAt: string | null;
+  invitationPreviewUrl: string | null;
+}

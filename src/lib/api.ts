@@ -1,6 +1,19 @@
-import type { Project, WeeklyMetrics, DailyMetrics, Alert, PlanData, PlanMilestone, ProgressReport, SnapshotMetadata, ActivitySummary } from "./types";
+import type {
+  ActivitySummary,
+  AdminUser,
+  Alert,
+  AuthSession,
+  DailyMetrics,
+  PlanData,
+  PlanMilestone,
+  ProgressReport,
+  Project,
+  SnapshotMetadata,
+  UserRole,
+  UserStatus,
+  WeeklyMetrics,
+} from "./types";
 import {
-  projects as mockProjects,
   getWeeklyMetrics as mockWeekly,
   getDailyMetrics as mockDaily,
   getActivitySummary as mockActivitySummary,
@@ -10,7 +23,7 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`);
+  const res = await fetch(`${API_URL}${path}`, { credentials: "include" });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -18,6 +31,7 @@ async function get<T>(path: string): Promise<T> {
 async function patch<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "PATCH",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
@@ -28,8 +42,20 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
 async function post<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+async function put<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
   return res.json();
@@ -38,21 +64,11 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
 // ── Projects ────────────────────────────────────────────────────────────────
 
 export async function fetchProjects(): Promise<Project[]> {
-  try {
-    return await get<Project[]>("/api/projects");
-  } catch {
-    return mockProjects;
-  }
+  return get<Project[]>("/api/projects");
 }
 
 export async function fetchProject(id: string): Promise<Project> {
-  try {
-    return await get<Project>(`/api/projects/${id}`);
-  } catch {
-    const p = mockProjects.find((p) => p.id === id);
-    if (!p) throw new Error("Project not found");
-    return p;
-  }
+  return get<Project>(`/api/projects/${id}`);
 }
 
 export async function updateProject(
@@ -229,6 +245,7 @@ export async function uploadPlan(projectId: string, file: File): Promise<Record<
   formData.append("file", file);
   const res = await fetch(`${API_URL}/api/projects/${projectId}/plan/upload`, {
     method: "POST",
+    credentials: "include",
     body: formData,
   });
   if (!res.ok) {
@@ -269,4 +286,64 @@ export async function fetchReports(projectId: string): Promise<ProgressReport[]>
 
 export async function fetchReport(projectId: string, reportId: number): Promise<ProgressReport> {
   return get<ProgressReport>(`/api/projects/${projectId}/reports/${reportId}`);
+}
+
+export async function login(email: string, password: string): Promise<AuthSession> {
+  return post<AuthSession>("/api/auth/login", { email, password });
+}
+
+export async function logout(): Promise<void> {
+  await post("/api/auth/logout");
+}
+
+export async function fetchSession(): Promise<AuthSession> {
+  return get<AuthSession>("/api/auth/me");
+}
+
+export async function consumeInvitation(
+  token: string,
+  payload: { firstName: string; lastName: string; password: string },
+): Promise<AuthSession> {
+  return post<AuthSession>("/api/auth/invitations/consume", { token, ...payload });
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  await post("/api/auth/password/forgot", { email });
+}
+
+export async function resetPassword(token: string, password: string): Promise<void> {
+  await post("/api/auth/password/reset", { token, password });
+}
+
+export async function fetchAdminUsers(): Promise<AdminUser[]> {
+  return get<AdminUser[]>("/api/admin/users");
+}
+
+export async function createAdminUser(payload: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+  projectIds: number[];
+}): Promise<AdminUser> {
+  return post<AdminUser>("/api/admin/users", payload);
+}
+
+export async function updateAdminUser(
+  userId: number,
+  payload: { role: UserRole; status: UserStatus },
+): Promise<AdminUser> {
+  return patch<AdminUser>(`/api/admin/users/${userId}`, payload);
+}
+
+export async function resendAdminInvite(userId: number): Promise<AdminUser> {
+  return post<AdminUser>(`/api/admin/users/${userId}/resend-invite`);
+}
+
+export async function setAdminUserEnabled(userId: number, enabled: boolean): Promise<AdminUser> {
+  return post<AdminUser>(`/api/admin/users/${userId}/${enabled ? "enable" : "disable"}`);
+}
+
+export async function setAdminUserProjects(userId: number, projectIds: number[]): Promise<AdminUser> {
+  return put<AdminUser>(`/api/admin/users/${userId}/projects`, { projectIds });
 }

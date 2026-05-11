@@ -31,3 +31,31 @@ export function timeAgo(dateStr: string): string {
   if (diffHours < 24) return `${diffHours}h ago`;
   return `${diffDays}d ago`;
 }
+
+interface UserIdentityLike {
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+}
+
+export function getUserDisplayName(user: UserIdentityLike | null | undefined): string {
+  const fullName = [user?.firstName?.trim(), user?.lastName?.trim()].filter(Boolean).join(" ");
+  if (fullName) return fullName;
+
+  const emailLocalPart = user?.email?.split("@")[0]?.trim();
+  if (emailLocalPart) return emailLocalPart;
+
+  return "Account";
+}
+
+export function getUserInitials(user: UserIdentityLike | null | undefined): string {
+  const initials = [user?.firstName?.trim(), user?.lastName?.trim()]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.charAt(0).toUpperCase())
+    .join("");
+
+  if (initials) return initials.slice(0, 2);
+
+  const emailInitial = user?.email?.trim()?.[0]?.toUpperCase();
+  return emailInitial || "A";
+}

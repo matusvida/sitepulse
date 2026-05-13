@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { resetPassword } from "@/lib/api";
+import { ApiRequestError, getApiErrorMessage, resetPassword } from "@/lib/api";
 
 export default function ResetPasswordPage() {
   return (
@@ -37,8 +37,12 @@ function ResetPasswordPageContent() {
       await resetPassword(token, password);
       setDone(true);
       setTimeout(() => router.replace("/signin"), 800);
-    } catch {
-      setError("Reset link is invalid or expired");
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === "invalid_token") {
+        setError("Reset link is invalid or expired");
+      } else {
+        setError(getApiErrorMessage(error, "Reset link is invalid or expired"));
+      }
     } finally {
       setLoading(false);
     }

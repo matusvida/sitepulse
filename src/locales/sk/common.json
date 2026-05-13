@@ -35,6 +35,8 @@
     "projectAccess": "Prístup k projektom",
     "selectProjects": "Vybrať projekty",
     "projectsSelected": "Vybrané projekty: {{count}}",
+    "selectedProjectsLabel": "Vybrané projekty",
+    "done": "Hotovo",
     "sendInvite": "Poslať pozvánku",
     "sendingInvite": "Odosiela sa pozvánka...",
     "invitationSent": "Pozvánka odoslaná",

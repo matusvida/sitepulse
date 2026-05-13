@@ -35,6 +35,8 @@
     "projectAccess": "Project access",
     "selectProjects": "Select projects",
     "projectsSelected": "{{count}} project(s) selected",
+    "selectedProjectsLabel": "Selected projects",
+    "done": "Done",
     "sendInvite": "Send invite",
     "sendingInvite": "Sending invite...",
     "invitationSent": "Invitation sent",

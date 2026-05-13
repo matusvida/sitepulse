@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { consumeInvitation } from "@/lib/api";
+import { ApiRequestError, consumeInvitation, getApiErrorMessage } from "@/lib/api";
 import { useLanguage } from "@/lib/language-context";
 
 export default function InvitationPage() {
@@ -38,8 +38,12 @@ function InvitationPageContent() {
     try {
       await consumeInvitation(token, { firstName, lastName, password });
       router.replace("/dashboard");
-    } catch {
-      setError(t("invitePage.invalidOrExpired"));
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.code === "invalid_token") {
+        setError(t("invitePage.invalidOrExpired"));
+      } else {
+        setError(getApiErrorMessage(error, t("invitePage.invalidOrExpired")));
+      }
     } finally {
       setLoading(false);
     }

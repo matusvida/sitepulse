@@ -22,9 +22,78 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+export interface ApiViolation {
+  field: string;
+  message: string;
+}
+
+interface ApiErrorResponse {
+  status?: number;
+  error?: string;
+  code?: string;
+  detail?: string;
+  violations?: ApiViolation[];
+}
+
+export class ApiRequestError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly detail?: string;
+  readonly violations: ApiViolation[];
+
+  constructor(
+    message: string,
+    options: {
+      status: number;
+      code?: string;
+      detail?: string;
+      violations?: ApiViolation[];
+    },
+  ) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = options.status;
+    this.code = options.code;
+    this.detail = options.detail;
+    this.violations = options.violations ?? [];
+  }
+}
+
+async function createApiError(res: Response): Promise<ApiRequestError> {
+  let payload: ApiErrorResponse | null = null;
+
+  try {
+    payload = (await res.json()) as ApiErrorResponse;
+  } catch {
+    payload = null;
+  }
+
+  const message =
+    payload?.violations?.[0]?.message ??
+    payload?.detail ??
+    `API ${res.status}: ${res.statusText}`;
+
+  return new ApiRequestError(message, {
+    status: res.status,
+    code: payload?.code,
+    detail: payload?.detail,
+    violations: payload?.violations,
+  });
+}
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiRequestError) {
+    return error.violations[0]?.message ?? error.detail ?? error.message;
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, { credentials: "include" });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  if (!res.ok) throw await createApiError(res);
   return res.json();
 }
 
@@ -35,7 +104,7 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  if (!res.ok) throw await createApiError(res);
   return res.json();
 }
 
@@ -46,7 +115,7 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  if (!res.ok) throw await createApiError(res);
   return res.json();
 }
 
@@ -57,7 +126,7 @@ async function put<T>(path: string, body: unknown): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API ${res.status}: ${res.statusText}`);
+  if (!res.ok) throw await createApiError(res);
   return res.json();
 }
 

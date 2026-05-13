@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Check, ChevronDown } from "lucide-react";
 import {
   createAdminUser,
   fetchAdminUsers,
@@ -25,16 +26,39 @@ export default function AdminUsersPage() {
   const { allProjects } = useProject();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
+  const [projectsOpen, setProjectsOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("USER");
   const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
+  const projectPickerRef = useRef<HTMLDivElement>(null);
 
   const projectOptions = useMemo(
     () => allProjects.map((project) => ({ value: project.id, label: project.name })),
     [allProjects],
   );
+
+  const isInviteReady =
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    selectedProjects.length > 0;
+
+  useEffect(() => {
+    if (!projectsOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (projectPickerRef.current?.contains(target)) return;
+      setProjectsOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [projectsOpen]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -53,20 +77,26 @@ export default function AdminUsersPage() {
 
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
-    const created = await createAdminUser({
-      firstName,
-      lastName,
-      email,
-      role,
-      projectIds: selectedProjects,
-    });
+    setCreating(true);
+    try {
+      const created = await createAdminUser({
+        firstName,
+        lastName,
+        email,
+        role,
+        projectIds: selectedProjects,
+      });
 
-    setUsers((current) => [created, ...current]);
-    setFirstName("");
-    setLastName("");
-    setEmail("");
-    setRole("USER");
-    setSelectedProjects([]);
+      setUsers((current) => [created, ...current]);
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setRole("USER");
+      setSelectedProjects([]);
+      setInviteSent(true);
+    } finally {
+      setCreating(false);
+    }
   };
 
   if (user?.role !== "ADMIN") {
@@ -93,7 +123,10 @@ export default function AdminUsersPage() {
               id="first-name"
               label={t("adminPage.firstName")}
               value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
+              onChange={(event) => {
+                setFirstName(event.target.value);
+                setInviteSent(false);
+              }}
               autoComplete="given-name"
               required
             />
@@ -101,7 +134,10 @@ export default function AdminUsersPage() {
               id="last-name"
               label={t("adminPage.lastName")}
               value={lastName}
-              onChange={(event) => setLastName(event.target.value)}
+              onChange={(event) => {
+                setLastName(event.target.value);
+                setInviteSent(false);
+              }}
               autoComplete="family-name"
               required
             />
@@ -110,7 +146,10 @@ export default function AdminUsersPage() {
               label={t("adminPage.email")}
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setInviteSent(false);
+              }}
               autoComplete="email"
               required
             />
@@ -125,34 +164,90 @@ export default function AdminUsersPage() {
                   { value: "ADMIN", label: t("adminPage.roleAdmin") },
                 ]}
                 value={role}
-                onChange={(event) => setRole(event.target.value as UserRole)}
+                onChange={(event) => {
+                  setRole(event.target.value as UserRole);
+                  setInviteSent(false);
+                }}
               />
             </div>
             <div className="space-y-2 xl:col-span-2">
               <label htmlFor="projects" className="text-sm font-medium text-foreground">
                 {t("adminPage.projectAccess")}
               </label>
-              <select
-                id="projects"
-                multiple
-                className="min-h-24 w-full rounded-xl border border-border/80 bg-white/75 px-3 py-2 text-sm outline-none focus:border-primary/40"
-                value={selectedProjects.map(String)}
-                onChange={(event) =>
-                  setSelectedProjects(
-                    Array.from(event.target.selectedOptions).map((option) => Number(option.value)),
-                  )
-                }
-              >
-                {projectOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <div ref={projectPickerRef} className="relative">
+                <button
+                  id="projects"
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded={projectsOpen}
+                  onClick={() => setProjectsOpen((open) => !open)}
+                  className="flex h-11 w-full items-center justify-between rounded-2xl border border-border/80 bg-white/80 px-3.5 text-sm text-foreground shadow-[0_8px_24px_-18px_rgba(15,23,42,0.45)] transition-[border-color,box-shadow,background-color] hover:bg-white focus-visible:border-primary/40 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+                >
+                  <span className={selectedProjects.length === 0 ? "text-muted" : ""}>
+                    {selectedProjects.length === 0
+                      ? t("adminPage.selectProjects")
+                      : t("adminPage.projectsSelected", { count: selectedProjects.length })}
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${projectsOpen ? "rotate-180 text-primary" : ""}`}
+                  />
+                </button>
+
+                {projectsOpen ? (
+                  <div className="absolute z-[100] mt-2 w-full rounded-[24px] border border-white/80 bg-white/96 p-2 shadow-[0_26px_70px_-34px_rgba(15,23,42,0.45)] backdrop-blur-xl">
+                    <div role="listbox" aria-multiselectable="true" className="max-h-72 overflow-auto">
+                      {projectOptions.map((option) => {
+                        const projectId = Number(option.value);
+                        const selected = selectedProjects.includes(projectId);
+
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            onClick={() => {
+                              setSelectedProjects((current) =>
+                                current.includes(projectId)
+                                  ? current.filter((value) => value !== projectId)
+                                  : [...current, projectId],
+                              );
+                              setInviteSent(false);
+                            }}
+                            className={`flex w-full items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5 text-left text-sm transition-[background-color,color] outline-none ${
+                              selected
+                                ? "border border-primary/15 bg-primary/10 text-foreground shadow-[0_16px_34px_-28px_rgba(29,95,209,0.2)]"
+                                : "text-foreground hover:bg-accent"
+                            }`}
+                          >
+                            <span className="truncate">{option.label}</span>
+                            <Check className={`h-4 w-4 shrink-0 ${selected ? "text-primary opacity-100" : "opacity-0"}`} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             </div>
             <div className="flex items-end xl:col-span-2">
-              <Button type="submit" className="w-full md:w-auto">
-                {t("adminPage.sendInvite")}
+              <Button
+                type="submit"
+                className="group relative w-full overflow-hidden md:w-auto"
+                disabled={creating || !isInviteReady}
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 left-[-30%] w-14 -skew-x-12 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent)] opacity-80 group-disabled:hidden"
+                  style={{ animation: "inviteShimmer 2.8s ease-in-out infinite" }}
+                />
+                <span className="relative z-[1]">
+                  {creating
+                    ? t("adminPage.sendingInvite")
+                    : inviteSent
+                      ? t("adminPage.invitationSent")
+                      : t("adminPage.sendInvite")}
+                </span>
               </Button>
             </div>
           </form>
@@ -264,6 +359,26 @@ export default function AdminUsersPage() {
           ))}
         </CardContent>
       </Card>
+      <style jsx>{`
+        @keyframes inviteShimmer {
+          0%,
+          18% {
+            transform: translateX(-180%) skewX(-12deg);
+            opacity: 0;
+          }
+          28% {
+            opacity: 0.8;
+          }
+          52% {
+            transform: translateX(440%) skewX(-12deg);
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(440%) skewX(-12deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }

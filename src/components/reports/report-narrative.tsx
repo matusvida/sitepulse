@@ -4,10 +4,10 @@ import { Children, isValidElement, useMemo } from "react";
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 
-const reportSectionHeadingClass = "mt-8 text-base font-semibold text-foreground";
-const reportSubheadingClass = "mt-6 text-sm font-semibold text-foreground";
-const reportBodyClass = "mt-3 pl-5 text-sm leading-7 text-muted";
-const reportListClass = "mt-3 space-y-2 pl-9 text-sm leading-7 text-muted";
+const reportSectionHeadingClass = "mt-8 break-words text-base font-semibold text-foreground";
+const reportSubheadingClass = "mt-6 break-words text-sm font-semibold text-foreground";
+const reportBodyClass = "mt-3 break-words pl-5 text-sm leading-7 text-muted";
+const reportListClass = "mt-3 space-y-2 break-words pl-9 text-sm leading-7 text-muted";
 
 function getNodeText(node: React.ReactNode): string {
   return Children.toArray(node)
@@ -81,7 +81,7 @@ export function ReportNarrative({ contentMd }: ReportNarrativeProps) {
   );
 
   return (
-    <div className="prose prose-sm prose-zinc mt-5 max-w-none">
+    <div className="prose prose-sm prose-zinc mt-5 max-w-none min-w-0 overflow-x-hidden break-words">
       <Markdown components={markdownComponents}>{contentMd}</Markdown>
     </div>
   );

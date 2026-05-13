@@ -97,7 +97,7 @@ export function ReportEvidenceGallery({
                     <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/72">
                       {selectedPositionLabel}
                     </p>
-                    <p className="mt-1 text-sm font-semibold sm:text-base">{selectedLabel}</p>
+                    <p className="mt-1 break-words text-sm font-semibold sm:text-base">{selectedLabel}</p>
                   </div>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export function ReportEvidenceGallery({
               </span>
               <span className="min-w-0 truncate text-foreground">{selectedLabel}</span>
               {selectedSourceLabel ? (
-                <span className="min-w-0 w-full truncate text-[11px] text-muted sm:flex-1">
+                <span className="min-w-0 w-full break-all text-[11px] leading-5 text-muted sm:flex-1">
                   {selectedSourceLabel}
                 </span>
               ) : null}
@@ -159,7 +159,7 @@ export function ReportEvidenceGallery({
                     onClick={() => setSelectedIndex(index)}
                     className={cn(
                       "group shrink-0 snap-start overflow-hidden rounded-[20px] border bg-white/82 text-left shadow-[0_20px_40px_-34px_rgba(15,23,42,0.42)] transition-[border-color,box-shadow,transform] duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15",
-                      "w-[148px] sm:w-[172px]",
+                      "w-[132px] sm:w-[160px] lg:w-[172px]",
                       active
                         ? "border-primary/75 shadow-[0_24px_54px_-34px_rgba(14,116,144,0.5)]"
                         : "border-border/70 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[0_24px_54px_-34px_rgba(15,23,42,0.42)]",

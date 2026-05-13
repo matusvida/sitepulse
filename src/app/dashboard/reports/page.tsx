@@ -147,7 +147,7 @@ export default function ReportsPage() {
   );
 
   return (
-    <div className="min-w-0 space-y-6">
+    <div className="min-w-0 overflow-x-clip space-y-6">
       <div>
         <h1 className="text-xl font-semibold">{t("reportsPage.title")}</h1>
         <p className="mt-1 text-sm text-muted">{t("reportsPage.description")}</p>
@@ -190,14 +190,14 @@ export default function ReportsPage() {
             t={t}
           />
 
-          <Card className="relative z-0 min-h-[460px] min-w-0 overflow-hidden">
+          <Card className="relative z-0 min-h-[460px] min-w-0 max-w-full overflow-x-clip overflow-y-hidden">
             {loadingDetail ? (
               <div className="flex h-full items-center justify-center py-20">
                 <Loader2 className="h-6 w-6 animate-spin text-muted" />
               </div>
             ) : activeReport?.contentMd ? (
               <>
-                <div className="min-w-0 border-b pb-5">
+                <div className="min-w-0 max-w-full border-b pb-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="default">{getReportTypeLabel(activeReport, t)}</Badge>
                     <Badge variant="outline">{getReportOriginLabel(activeReport, t)}</Badge>
@@ -205,7 +205,7 @@ export default function ReportsPage() {
                       <Badge variant={getConfidenceVariant(activeReport)}>{activeConfidenceLabel}</Badge>
                     ) : null}
                   </div>
-                  <h2 className="mt-3 text-lg font-semibold tracking-tight text-foreground">
+                  <h2 className="mt-3 break-words text-lg font-semibold tracking-tight text-foreground">
                     {getReportHeadline(activeReport, t)}
                   </h2>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">

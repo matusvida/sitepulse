@@ -45,7 +45,7 @@
     "loadingUsers": "Načítavam používateľov...",
     "lastLogin": "Posledné prihlásenie {{date}}",
     "neverLoggedIn": "Nikdy sa neprihlásil",
-    "resendInvite": "Poslať pozvánku znova",
+    "resendInvite": "Preoslať pozvánku",
     "enable": "Povoliť",
     "disable": "Zakázať",
     "statusInvited": "Pozvaný",

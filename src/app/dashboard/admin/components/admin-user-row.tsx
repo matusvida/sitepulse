@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import type { AdminUser, UserRole, UserStatus } from "@/lib/types";
 import { getUserDisplayName } from "@/lib/utils";
-import { ProjectMultiSelect } from "./project-multi-select";
 import type { ProjectOption, UserDraft } from "../types";
 import { areProjectIdsEqual, summarizeSelectedProjects } from "../utils";
+import { ProjectMultiSelect } from "./project-multi-select";
 
 type AdminUserRowProps = {
   adminUser: AdminUser;
@@ -40,8 +40,8 @@ export function AdminUserRow({
 
   return (
     <div className="rounded-2xl border border-white/80 bg-white/70 px-4 py-3 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.32)]">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0 xl:max-w-[26rem]">
+      <div className="space-y-4">
+        <div className="min-w-0 2xl:max-w-[26rem]">
           <p className="truncate font-semibold text-foreground">{getUserDisplayName(adminUser)}</p>
           <p className="truncate text-sm text-muted">{adminUser.email}</p>
           <p className="truncate text-sm text-muted">{profileSummary}</p>
@@ -50,8 +50,8 @@ export function AdminUserRow({
           ) : null}
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 xl:flex xl:items-center">
-          <div className="min-w-[148px]">
+        <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-[minmax(148px,168px)_minmax(156px,176px)_minmax(0,260px)_auto] 2xl:items-center">
+          <div className="min-w-0">
             <Select
               id={`role-${adminUser.id}`}
               options={[
@@ -67,7 +67,8 @@ export function AdminUserRow({
               }
             />
           </div>
-          <div className="min-w-[156px]">
+
+          <div className="min-w-0">
             <Select
               id={`status-${adminUser.id}`}
               options={[
@@ -84,31 +85,45 @@ export function AdminUserRow({
               }
             />
           </div>
-          <ProjectMultiSelect
-            id={`projects-${adminUser.id}`}
-            options={projectOptions}
-            value={draft.projectIds}
-            onChange={(nextValue) =>
-              onDraftChange({
-                ...draft,
-                projectIds: nextValue,
-              })
-            }
-            placeholder={t("adminPage.selectProjects")}
-            selectedLabel={summarizeSelectedProjects(
-              draft.projectIds,
-              projectOptions,
-              (count) => t("common.andMore", { count }),
-              t("common.none"),
-            )}
-            disabled={!projectsEditable}
-            widthClassName="min-w-[220px] xl:w-[220px]"
-          />
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => void onResendInvite()}>
+
+          <div className="min-w-0 lg:col-span-2 2xl:col-span-1">
+            <ProjectMultiSelect
+              id={`projects-${adminUser.id}`}
+              options={projectOptions}
+              value={draft.projectIds}
+              onChange={(nextValue) =>
+                onDraftChange({
+                  ...draft,
+                  projectIds: nextValue,
+                })
+              }
+              placeholder={t("adminPage.selectProjects")}
+              selectedLabel={summarizeSelectedProjects(
+                draft.projectIds,
+                projectOptions,
+                (count) => t("common.andMore", { count }),
+                t("common.none"),
+              )}
+              disabled={!projectsEditable}
+              widthClassName="w-full 2xl:w-[260px]"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 lg:col-span-2 2xl:col-span-1 2xl:justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => void onResendInvite()}
+            >
               {t("adminPage.resendInvite")}
             </Button>
-            <Button size="sm" disabled={!isDirty} onClick={() => void onSave()}>
+            <Button
+              size="sm"
+              className="w-full sm:w-auto"
+              disabled={!isDirty}
+              onClick={() => void onSave()}
+            >
               {t("common.save")}
             </Button>
           </div>

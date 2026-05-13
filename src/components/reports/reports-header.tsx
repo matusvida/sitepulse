@@ -33,8 +33,8 @@ export function ReportsHeader({
 }: ReportsHeaderProps) {
   return (
     <section className="relative z-20 rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.28)] backdrop-blur-sm">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="shrink-0">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
             {t("reportsPage.typeSelectorLabel")}
           </p>
@@ -67,7 +67,7 @@ export function ReportsHeader({
           </div>
         </div>
 
-        <div className="w-full max-w-xl self-start lg:self-end">
+        <div className="min-w-0 w-full self-start xl:max-w-xl xl:self-end xl:flex-1">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
             {t("reportsPage.reportSelectorLabel")}
           </p>

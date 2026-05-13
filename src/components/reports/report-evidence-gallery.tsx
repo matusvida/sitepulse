@@ -69,8 +69,7 @@ export function ReportEvidenceGallery({
   }
 
   return (
-    <>
-      <section className="mt-5 rounded-[24px] border border-border/70 bg-accent/30 p-4 sm:p-5">
+      <section className="mt-5 min-w-0 max-w-full overflow-hidden rounded-[24px] border border-border/70 bg-accent/30 p-4 sm:p-5">
         <div className="flex items-start gap-3">
           <div className="rounded-2xl bg-white/80 p-2 text-primary shadow-[0_14px_28px_-24px_rgba(15,23,42,0.55)]">
             <ImageIcon className="h-4 w-4" />
@@ -81,8 +80,8 @@ export function ReportEvidenceGallery({
           </div>
         </div>
 
-        <div className="mt-4 space-y-3">
-          <div className="relative block w-full overflow-hidden rounded-[24px] border border-white/85 bg-slate-950 text-left shadow-[0_26px_70px_-42px_rgba(15,23,42,0.72)]">
+        <div className="mt-4 min-w-0 space-y-3">
+          <div className="relative block w-full min-w-0 max-w-full overflow-hidden rounded-[24px] border border-white/85 bg-slate-950 text-left shadow-[0_26px_70px_-42px_rgba(15,23,42,0.72)]">
             <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
               <Image
                 src={selectedImage.url}
@@ -105,18 +104,20 @@ export function ReportEvidenceGallery({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-border/70 bg-white/78 px-4 py-3 text-xs text-muted shadow-[0_20px_44px_-34px_rgba(15,23,42,0.34)]">
+          <div className="flex min-w-0 max-w-full flex-wrap items-center justify-between gap-3 overflow-hidden rounded-[20px] border border-border/70 bg-white/78 px-4 py-3 text-xs text-muted shadow-[0_20px_44px_-34px_rgba(15,23,42,0.34)]">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
               <span className="font-semibold uppercase tracking-[0.16em] text-slate-500">
                 {selectedPositionLabel}
               </span>
               <span className="min-w-0 truncate text-foreground">{selectedLabel}</span>
               {selectedSourceLabel ? (
-                <span className="min-w-0 flex-1 truncate text-[11px] text-muted">{selectedSourceLabel}</span>
+                <span className="min-w-0 w-full truncate text-[11px] text-muted sm:flex-1">
+                  {selectedSourceLabel}
+                </span>
               ) : null}
             </div>
             {images.length > 1 ? (
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -142,11 +143,11 @@ export function ReportEvidenceGallery({
           </div>
 
           <div
-            className="overflow-x-auto scroll-smooth pb-1"
+            className="w-full max-w-full overflow-x-auto overflow-y-hidden scroll-smooth pb-1"
             aria-label={labels.thumbnailRail}
             ref={thumbnailRailRef}
           >
-            <div className="flex min-w-full snap-x snap-mandatory gap-3 pr-1">
+            <div className="flex w-max min-w-full snap-x snap-mandatory gap-3 pr-1">
               {images.map((image, index) => {
                 const imageLabel = getEvidenceLabel(image, index);
                 const active = index === boundedSelectedIndex;
@@ -192,7 +193,5 @@ export function ReportEvidenceGallery({
           </div>
         </div>
       </section>
-
-    </>
   );
 }

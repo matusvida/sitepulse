@@ -147,7 +147,7 @@ export default function ReportsPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-xl font-semibold">{t("reportsPage.title")}</h1>
         <p className="mt-1 text-sm text-muted">{t("reportsPage.description")}</p>
@@ -190,14 +190,14 @@ export default function ReportsPage() {
             t={t}
           />
 
-          <Card className="relative z-0 min-h-[460px]">
+          <Card className="relative z-0 min-h-[460px] min-w-0 overflow-hidden">
             {loadingDetail ? (
               <div className="flex h-full items-center justify-center py-20">
                 <Loader2 className="h-6 w-6 animate-spin text-muted" />
               </div>
             ) : activeReport?.contentMd ? (
               <>
-                <div className="border-b pb-5">
+                <div className="min-w-0 border-b pb-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="default">{getReportTypeLabel(activeReport, t)}</Badge>
                     <Badge variant="outline">{getReportOriginLabel(activeReport, t)}</Badge>

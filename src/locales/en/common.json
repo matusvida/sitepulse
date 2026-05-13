@@ -226,7 +226,11 @@
       "open": "Open",
       "acknowledged": "Acknowledged",
       "resolved": "Resolved"
-    }
+    },
+    "openEvidenceLightbox": "Open evidence image",
+    "previousEvidenceImage": "Previous evidence image",
+    "nextEvidenceImage": "Next evidence image",
+    "evidenceThumbnailRail": "Evidence image thumbnails"
   },
   "planPage": {
     "title": "Construction plan",
@@ -376,7 +380,7 @@
     }
   },
   "reportsPage": {
-    "title": "AI Reports",
+    "title": "Activity reports",
     "description": "Review recurring AI briefings and create custom analyses for specific time windows.",
     "generateTitle": "Generate Custom Analysis",
     "generateDescription": "Create an ad hoc AI summary for a selected date range. Scheduled daily and weekly reports appear below as separate history sections.",
@@ -387,6 +391,7 @@
     "generationFailed": "Generation failed",
     "temporarilyDisabled": "This feature is temporarily disabled",
     "analyzing": "Analyzing site photos with GPT-4o Vision. This may take 30-60 seconds...",
+    "errorTitle": "Unable to load reports",
     "quickActions": {
       "latestDay": "Latest day",
       "last7Captures": "Last 7 captures",
@@ -401,11 +406,18 @@
     "evidenceSectionTitle": "Evidence images",
     "evidenceSectionDescription": "Open the exact images used as evidence for this report.",
     "evidenceImageFallback": "Evidence image",
+    "openEvidenceLightbox": "Open full-size evidence image",
+    "previousEvidenceImage": "Previous evidence image",
+    "nextEvidenceImage": "Next evidence image",
+    "evidenceThumbnailRail": "Evidence image thumbnails",
     "generatedAt": "Generated {{date}}",
     "weekOf": "Week of {{date}}",
     "periodUnavailable": "Period unavailable",
     "lowConfidenceTitle": "Limited evidence",
     "lowConfidenceDescription": "This report is based on limited visual evidence for the selected period.",
+    "typeSelectorLabel": "Report type",
+    "reportSelectorLabel": "Report",
+    "availableCount": "{{count}} reports available",
     "emptyTitle": "Select a report from the sidebar, or generate a new one.",
     "emptyDescription": "AI reports analyze site photos and metrics to assess construction progress.",
     "reportTypes": {

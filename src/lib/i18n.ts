@@ -11,7 +11,7 @@ type MessageParams = Record<string, string | number>;
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enCommon,
-  sk: skCommon,
+  sk: skCommon as Dictionary,
 };
 
 function getMessage(locale: Locale, key: string): string | null {

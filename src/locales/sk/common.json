@@ -226,7 +226,11 @@
       "open": "Otvorené",
       "acknowledged": "Potvrdené",
       "resolved": "Vyriešené"
-    }
+    },
+    "openEvidenceLightbox": "Otvori\u0165 podkladov\u00fa sn\u00edmku",
+    "previousEvidenceImage": "Predch\u00e1dzaj\u00faca podkladov\u00e1 sn\u00edmka",
+    "nextEvidenceImage": "Nasleduj\u00faca podkladov\u00e1 sn\u00edmka",
+    "evidenceThumbnailRail": "Miniat\u00fary podkladov\u00fdch sn\u00edmok"
   },
   "planPage": {
     "title": "Stavebný plán",
@@ -320,6 +324,7 @@
     "changeHours": "Pozorované aktívne hodiny sa posunuli z {{from}}h na {{to}}h.",
     "changeRiskSame": "Signál rizika meškania zostal {{value}}.",
     "changeRiskChanged": "Signál rizika meškania sa zmenil z {{from}} na {{to}}.",
+    "errorTitle": "Nepodarilo sa naÄÃ­taÅ¥ reporty",
     "quickActions": {
       "latestVsPrevious": "Najnovšia vs predchádzajúca",
       "firstVsLatest": "Prvá vs najnovšia",
@@ -376,7 +381,7 @@
     }
   },
   "reportsPage": {
-    "title": "AI Reports",
+    "title": "Reporting aktivity",
     "generateTitle": "Vygenerovať report postupu",
     "from": "Od",
     "to": "Do",
@@ -408,6 +413,9 @@
     "periodUnavailable": "Obdobie nie je dostupné",
     "lowConfidenceTitle": "Obmedzené podklady",
     "lowConfidenceDescription": "Tento report vychádza z obmedzeného vizuálneho podkladu pre zvolené obdobie.",
+    "typeSelectorLabel": "Typ reportu",
+    "reportSelectorLabel": "Report",
+    "availableCount": "Dostupn\u00fdch reportov: {{count}}",
     "reportTypes": {
       "daily": "Denný prehľad",
       "weekly": "Týždenný súhrn",

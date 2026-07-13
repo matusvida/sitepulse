@@ -147,7 +147,7 @@ export default function ReportsPage() {
   );
 
   return (
-    <div className="min-w-0 overflow-x-clip space-y-6">
+    <div className="min-w-0 space-y-6">
       <div>
         <h1 className="text-xl font-semibold">{t("reportsPage.title")}</h1>
         <p className="mt-1 text-sm text-muted">{t("reportsPage.description")}</p>
@@ -190,7 +190,7 @@ export default function ReportsPage() {
             t={t}
           />
 
-          <Card className="relative z-0 min-h-[460px] min-w-0 max-w-full overflow-x-clip overflow-y-hidden">
+          <Card className="relative z-0 min-h-[460px] min-w-0 max-w-full">
             {loadingDetail ? (
               <div className="flex h-full items-center justify-center py-20">
                 <Loader2 className="h-6 w-6 animate-spin text-muted" />

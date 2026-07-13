@@ -210,14 +210,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     );
 
     return (
-      <div className="space-y-2">
+      <div className="min-w-0 w-full space-y-2">
         {label ? (
           <label id={`${selectId}-label`} htmlFor={selectId} className="block text-sm font-medium text-foreground">
             {label}
           </label>
         ) : null}
 
-        <div className="relative">
+        <div className="relative min-w-0">
           <select
             {...props}
             ref={hiddenSelectRef}
@@ -260,7 +260,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               className,
             )}
           >
-            <span id={`${selectId}-value`} className={cn("truncate text-left", !selectedOption && "text-muted")}>
+            <span
+              id={`${selectId}-value`}
+              className={cn("min-w-0 flex-1 truncate text-left", !selectedOption && "text-muted")}
+            >
               {selectedOption?.label ?? placeholder ?? ""}
             </span>
             <ChevronDown
@@ -303,7 +306,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                             : "text-foreground hover:bg-accent",
                       )}
                     >
-                      <span className="truncate">{option.label}</span>
+                      <span className="min-w-0 flex-1 truncate">{option.label}</span>
                       <Check
                         className={cn(
                           "h-4 w-4 shrink-0",

@@ -36,11 +36,11 @@ function ShellFrame({ children }: { children: React.ReactNode }) {
     <div className="relative flex min-h-screen flex-col">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.82),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(29,95,209,0.08),transparent_22%)]" />
       <TopNav onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
-      <div className="relative flex flex-1">
+      <div className="relative flex min-w-0 flex-1">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <main className="flex-1">
-          <div className="mx-auto flex min-h-full w-full max-w-[1680px] flex-col gap-5 px-4 py-4 lg:px-5 lg:py-5 xl:gap-6 xl:px-6 xl:py-6">
-            <div className="flex-1">
+        <main className="min-w-0 flex-1">
+          <div className="mx-auto flex min-h-full min-w-0 w-full max-w-[1680px] flex-col gap-5 px-4 py-4 lg:px-5 lg:py-5 xl:gap-6 xl:px-6 xl:py-6">
+            <div className="min-w-0 flex-1">
               {allProjects.length === 0 ? (
                 <div className="mx-auto flex min-h-[60vh] max-w-2xl items-center justify-center">
                   <Card className="w-full max-w-xl">
